@@ -171,3 +171,138 @@ We don't have to restrict ourselves to `.zip`; in theory, we can use any archive
 
 * Expand image in the current HTML
 * IQDB/TinEye/Google/SauceNao
+
+## (FUTURE) Fix backquotes
+
+Javascript backquotes are broken; add a `.html` extension.
+
+* Orig: `g/33013702/33013702#p33013796`
+* Fix: `g/33013702/33013702.html#p33013796`
+
+## (SOLVED) post['com'] key error bug
+
+on these threads (which just happen to be stickies): <http://boards.4chan.org/k/res/14013417> <http://boards.4chan.org/g/res/33013702>
+
+py4chan spits out this error:
+
+    Traceback (most recent call last):
+      File "4chan-thread-archiver", line 263, in <module>
+	main(args)
+      File "4chan-thread-archiver", line 243, in main
+	list_external_links(curr_thread, dst_dir)
+      File "4chan-thread-archiver", line 152, in list_external_links
+	if not linkregex.search(reply.Comment):
+      File "/usr/lib/python2.7/site-packages/py4chan/__init__.py", line 309, in Comment
+	return self._data['com'] or None
+    KeyError: 'com'
+    
+My script that doesn't use py4chan spits out this error:
+
+    Traceback (most recent call last):
+      File "4chan-thread-archiver-orig", line 239, in <module>
+	main(args)
+      File "4chan-thread-archiver-orig", line 218, in main
+	get_files(dst_dir, board, thread, nothumbs, thumbsonly)
+      File "4chan-thread-archiver-orig", line 191, in get_files
+	list_external_links(json_thread, dst_dir)
+      File "4chan-thread-archiver-orig", line 156, in list_external_links
+	if not linkregex.search(post['com']):
+    KeyError: 'com'
+    
+However, the in the Python interpreter, `Post.Comment` works fine.
+
+    Python 2.7.3 (default, Feb 26 2013, 22:57:37) 
+    [GCC 4.7.2] on linux2
+    Type "help", "copyright", "credits" or "license" for more information.
+    >>> import py4chan
+    >>> k = py4chan.Board("k")
+    >>> thread = k.getThread(14013417)
+    >>> thread.Sticky
+    True
+    >>> reply = thread.replies[1]
+    >>> reply.Comment
+    u"Once you've chosen a frame size, <etc.> anyway."
+
+Even without py4chan, the result is the same.
+
+    >>> json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
+    >>> post = json_thread.json['posts'][0]
+    >>> post['com']
+    u'Welcome to /k/. In this thread you will find basic knowledge to get you to know weapons and how to use them safely plus some more detailed guides. All the useful information is gathered in the following infographics.<br><br>Safety is the most important thing so we will start with safety instructions.'
+    
+Checking the JSON, every single post has an associated `"com"` value, so there's no problem in the JSON itself. What is going on?
+
+Finally, I inserted this statement into `list_external_links()` where the loop checks the comment field for links. Maybe it was choking on a certain post?
+
+    for post in json_thread.json['posts']:
+	print post['com']
+
+The idea is that if the comment field existed, the loop would return the value of the comment all the way until it failed, and I could check that value to see what was up. Right after it printed the last comment, the script failed, and I checked what entry was right after the last working comment.
+
+    {
+      "ext": ".png",
+      "filename": "1302620113762",
+      "fsize": 1462132,
+      "h": 1225,
+      "md5": "wblCqtPMg5D6OdNXVIaN9w==",
+      "name": "Anonymous",
+      "no": 14013856,
+      "now": "01/02/13(Wed)16:43",
+      "resto": 14013417,
+      "tim": 1357162982849,
+      "time": 1357162982,
+      "tn_h": 95,
+      "tn_w": 125,
+      "w": 1600
+    }
+
+I was right. This bug involved nonexistent `"com"` fields, which are theoretically optional on the [4chan API](); but in practice, it wasn't easy to trick 4chan into posting nothing. As a result, posts without comments were rare enough for me to forget about them.
+
+Now I had to somehow handle nonexistent `"com"` fields in the program itself. Thanks to handy-dandy [StackOverflow](http://stackoverflow.com/questions/13606426/need-to-handle-keyerror-exception-python), I found that I could use a `try/except` loop or a special `if` statement. I already had a loop, so I added the `if` statement to my `list_external_links()` for loop.
+
+`4chan-thread-archiver-orig`
+
+    # comments are optional in 4chan API
+    if "com" not in post:
+	continue
+
+And for the py4chan based one, I had to modify the library itself; the library was handling optional attributes incorrectly when polled. The pull request is below.
+      
+And now it finally dumps correctly!
+
+### Pull request: BUG: Optional attributes aren't returning `None` when polled
+
+Certain attributes in the 4chan API are optional and are not passed in the JSON. When an attribute does not exist for a post, the py4chan library should return the `None` object. 
+
+Going by your code, you've tried to do that with this statement:
+
+    return self._data['sub'] or None
+
+However, it doesn't return `None` as expected when the attribute doesn't exist. It instead gives a `KeyError` that causes scripts to fail in a cryptic manner:
+
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "/usr/lib/python2.7/site-packages/py4chan/__init__.py", line 305, in Subject
+	return self._data['sub'] or None
+    KeyError: 'sub'
+
+### Solution B
+
+For some reason, the FileSize attribute uses this statement that returns `None` correctly:
+
+    return self._data.get('fsize', None)
+
+So I simply replaced the faulty statements with this one in this pull request. Now the error disappeared. 
+
+Why wasn't this one used in the first place?
+
+### Solution A (not used)
+
+Another solution is to check if the attribute exists with a special `if` statement.
+
+    if 'sub' not in self._data:
+	return None
+    else:
+	return self._data['com']
+
+And now the library works fine.

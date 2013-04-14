@@ -1,0 +1,2 @@
+requests-transition
+docopt==0.5.0

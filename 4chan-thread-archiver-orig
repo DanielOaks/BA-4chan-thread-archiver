@@ -20,7 +20,7 @@ import time
 import json
 import re
 import errno
-import requests
+import requests0 as requests
 
 from docopt import docopt
 
@@ -50,6 +50,7 @@ FOURCHAN_BOARDS_URL = 'http://boards.4chan.org/%s/res/%s' # board, thread
 # folder names for image and thumbnails
 IMAGE_DIR_NAME = "img"
 THUMB_DIR_NAME = "thumb"
+_CSS_DIR_NAME = "css"
 _DEFAULT_FOLDER = "4chan-saved-threads"
 
 _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
@@ -117,10 +118,22 @@ def file_replace(fname, pat, s_after):
 	out.close()
 	os.rename(out_fname, fname)
 
+# (REPLACE) Currently uses a static list of links, which works but is not ideal
+def dump_css(dst_dir):
+  fourchan_css_regex = re.compile("https?://static.4chan.org/css/(\w+)\.\d+.css")
+  
+  # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
+  css_list = ["https://static.4chan.org/css/yotsubluemobile.473.css", "https://static.4chan.org/css/yotsubluenew.473.css", "https://static.4chan.org/css/yotsubanew.473.css", "https://static.4chan.org/css/futabanew.473.css", "https://static.4chan.org/css/burichannew.473.css", "https://static.4chan.org/css/photon.473.css", "https://static.4chan.org/css/tomorrow.473.css"]
+  
+  for css_url in css_list:
+    css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
+    download_file(css_name, dst_dir, css_url)
+
+
 # Dumps thread in raw HTML format to `<thread-id>.html`
 def dump_html(dst_dir, board, thread):
-    fourchan_images_regex = re.compile("http://images.4chan.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("http://\d+.thumbs.4chan.org/\w+/thumb/")
+    fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
@@ -131,8 +144,14 @@ def dump_html(dst_dir, board, thread):
     file_replace(html_path, fourchan_images_regex, IMAGE_DIR_NAME + "/")
     file_replace(html_path, fourchan_thumbs_regex, THUMB_DIR_NAME + "/")
     
-    # (future) Download a local copy of all CSS files, and convert HTML links to use them (we need to use beautifulsoup to get links...)
-    #file_replace(html_path, "http://static.4chan.org/css/(\w+.\d+).css", "css/\\1.css")
+    # Download a local copy of all CSS files
+    dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
+    make_sure_path_exists(dst_css_dir)
+    dump_css(dst_css_dir)
+    
+    # convert HTML links to use local CSS files that we just downloaded
+    # (FUTURE) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
+    file_replace(html_path, "https?://static.4chan.org/css/(\w+)\.\d+.css", "css/\\1.css")
 
 # Grab thread JSON from 4chan API
 def dump_json(dst_dir, board, thread):
@@ -153,6 +172,10 @@ def list_external_links(json_thread, dst_dir):
     linklist_file = open(linklist_dst, "w")
 
     for post in json_thread.json['posts']:
+	# comments are optional in 4chan API
+	if "com" not in post:
+	    continue
+	# skip to the next post if links are not found
 	if not linkregex.search(post['com']):
 	    continue
 	else:
@@ -160,7 +183,7 @@ def list_external_links(json_thread, dst_dir):
 	    cleaned_com = re.sub(r'\<wbr\>', '', post['com'])
 	    linklist = re.findall(linkregex, cleaned_com)
 	    for item in linklist:
-		print("Found link to external site, saving in %s:\n%s\n" % (linklist_dst, item[0]))
+		print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
 		linklist_file.write(item[0])	# re.findall creates tuple
 		linklist_file.write('\n')	# subdivide with newlines
 

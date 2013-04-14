@@ -20,7 +20,7 @@ import time
 import json
 import re
 import errno
-import requests
+import requests0 as requests
 import py4chan
 
 from docopt import docopt
@@ -51,6 +51,7 @@ FOURCHAN_BOARDS_URL = 'http://boards.4chan.org/%s/res/%s' # board, thread
 # folder names for image and thumbnails
 _IMAGE_DIR_NAME = "img"
 _THUMB_DIR_NAME = "thumb"
+_CSS_DIR_NAME = "css"
 _DEFAULT_FOLDER = "4chan-saved-threads"
 
 _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
@@ -98,10 +99,21 @@ def file_replace(fname, pat, s_after):
 	out.close()
 	os.rename(out_fname, fname)
 
+# (REPLACE) Currently uses a static list of links, which works but is not ideal
+def dump_css(dst_dir):
+  fourchan_css_regex = re.compile("https://static.4chan.org/css/(\w+)\.\d+.css")
+  
+  # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
+  css_list = ["https://static.4chan.org/css/yotsubluemobile.473.css", "https://static.4chan.org/css/yotsubluenew.473.css", "https://static.4chan.org/css/yotsubanew.473.css", "https://static.4chan.org/css/futabanew.473.css", "https://static.4chan.org/css/burichannew.473.css", "https://static.4chan.org/css/photon.473.css", "https://static.4chan.org/css/tomorrow.473.css"]
+  
+  for css_url in css_list:
+    css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
+    download_file(css_name, dst_dir, css_url)
+
 # Dumps thread in raw HTML format to `<thread-id>.html`
 def dump_html(dst_dir, board, thread):
-    fourchan_images_regex = re.compile("http://images.4chan.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("http://\d+.thumbs.4chan.org/\w+/thumb/")
+    fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
@@ -112,8 +124,14 @@ def dump_html(dst_dir, board, thread):
     file_replace(html_path, fourchan_images_regex, _IMAGE_DIR_NAME + "/")
     file_replace(html_path, fourchan_thumbs_regex, _THUMB_DIR_NAME + "/")
     
-    # (future) Download a local copy of all CSS files, and convert HTML links to use them (we need to use beautifulsoup to get links...)
-    #file_replace(html_path, "http://static.4chan.org/css/(\w+.\d+).css", "css/\\1.css")
+    # Download a local copy of all CSS files
+    dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
+    make_sure_path_exists(dst_css_dir)
+    dump_css(dst_css_dir)
+    
+    # convert HTML links to use local CSS files that we just downloaded
+    # (FUTURE) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
+    file_replace(html_path, "https?://static.4chan.org/css/(\w+)\.\d+.css", "css/\\1.css")
 
 # Grab thread JSON from 4chan API
 def dump_json(dst_dir, board, thread):
@@ -134,6 +152,8 @@ def list_external_links(curr_thread, dst_dir):
     linklist_file = open(linklist_dst, "w")
 
     for reply in curr_thread.replies:
+      if (reply.Comment == None):
+	  continue
       if not linkregex.search(reply.Comment):
 	  continue
       else:
@@ -141,7 +161,7 @@ def list_external_links(curr_thread, dst_dir):
 	  cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
 	  linklist = re.findall(linkregex, cleaned_com)
 	  for item in linklist:
-	      print("Found link to external site, saving in %s:\n%s\n" % (linklist_dst, item[0]))
+	      print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
 	      linklist_file.write(item[0])	# re.findall creates tuple
 	      linklist_file.write('\n')	# subdivide with newlines
 
@@ -158,8 +178,8 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
     make_sure_path_exists(dst_thumbs_dir)
     
     # regex for obtaining filenames
-    fourchan_images_regex = re.compile("http://images.4chan.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("http://\d+.thumbs.4chan.org/\w+/thumb/")
+    fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
     
     if (thumbsonly == False):
       # Dump all images within a thread from 4chan
@@ -173,6 +193,29 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
 	thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
 	download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
+def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
+    # Create paths if they don't exist
+    make_sure_path_exists(dst_dir)
+    
+    # Download images and thumbs 
+    get_files(dst_dir, curr_thread, nothumbs, thumbsonly)
+    
+    # Get all external links quoted in comments
+    list_external_links(curr_thread, dst_dir)
+
+    # Dumps thread in raw HTML format to `<thread-id>.html`
+    dump_html(dst_dir, board, thread)
+    
+    # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
+    dump_json(dst_dir, board, thread)
+
+# Timestamp
+# http://www.interfaceware.com/manual/timestamps_with_milliseconds.html
+def timestamp():
+   now = time.time()
+   localtime = time.localtime(now)
+   return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
+
 def main(args):
     # Copy data from arguments
     thread = args.get('<url>').split('/')[5]
@@ -185,6 +228,9 @@ def main(args):
     # Set a default path if none is given
     if (path == None):
       path = os.path.join(os.getcwd() + os.path.sep + _DEFAULT_FOLDER)
+      
+    # Destination directory
+    dst_dir = os.path.join(path, board, thread)
 
     # Initiate py4chan object
     curr_board = py4chan.Board(board)
@@ -193,45 +239,38 @@ def main(args):
     # Switch to tell first run
     firstIteration = True
 
+    # Command line header
+    print(' :: Board : 4chan /%s/' % board)
+    print(' :: Thread: %s' % thread)
+    print(' :: Folder: %s' % dst_dir)
+
     # try/except to handle Ctrl-C
     try:
       while 1:
 	  # don't run this code the first time
 	  if (firstIteration == False):
 	      # Wait to execute code again
-	      print("Waiting %s seconds before retrying (Type Ctrl-C to stop)\n" % delay)
+	      print("\nWaiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
 	      time.sleep(int(delay))
 	      
 	      if curr_thread.is_404:
-		print("[Thread 404'ed or Connection Lost]")
+		print("%s - [Thread 404'ed or Connection Lost]" % timestamp())
 		break
 	      
 	      # Update thread and check if new replies have appeared
 	      newReplies = curr_thread.update()
 	      if (newReplies == 0):
+		print("%s - [No new posts.]" % timestamp())
 		continue
 	      else:
-		print("%s new replies found!" % newReplies)
+		print("%s - [%s new post(s) found!]" % (timestamp(), newReplies))
+		
+	      # If all tests are OK, dump thread
+	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
+		
 	  else:
-	      print(' :: Board: %s' % board)
-	      print(' :: Thread: %s' % thread)
-	      
-	      # Create paths if they don't exist
-	      dst_dir = os.path.join(path, board, thread)
-	      make_sure_path_exists(dst_dir)
-	      print(' :: Folder: %s' % dst_dir)
-	      
-	      # Download images and thumbs 
-	      get_files(dst_dir, curr_thread, nothumbs, thumbsonly)
-	      
-	      # Get all external links quoted in comments
-	      list_external_links(curr_thread, dst_dir)
-
-	      # Dumps thread in raw HTML format to `<thread-id>.html`
-	      dump_html(dst_dir, board, thread)
-	      
-	      # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
-	      dump_json(dst_dir, board, thread)
+	      # The actual dumping
+	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
 	      
 	      # first iteration is complete
 	      firstIteration = False

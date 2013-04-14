@@ -4,6 +4,9 @@
 import os
 import sys
 
+# Use requirements.txt file for dependencies
+REQUIREMENTS = [i.strip() for i in open("requirements.txt").readlines()]
+
 try:
 	from setuptools import setup
 except ImportError:
@@ -15,19 +18,16 @@ if sys.argv[-1] == 'publish':
 
 setup(
 		name             = 'BA-4chan-thread-archiver',
-		version          = '0.4',
+		version          = '0.5',
 		description      = '4chan API-based thread archiver',
 		long_description = open('README.rst').read(), 
 		license          = open('LICENSE').read(),
 		author           = 'Lawrence Wu',
 		author_email     = 'sagnessagiel@gmail.com',
 		url              = 'https://github.com/treeofsephiroth/4chandownloader',
-#		author           = 'Socketubs',
-#		author_email     = 'geoffrey@lehee.name',
-#		url              = 'https://github.com/Socketubs/4chandownloader',
 		keywords         = '4chan downloader images json dump',
 		scripts          = ['4chan-thread-archiver', '4chan-thread-archiver-orig'],
-		install_requires = ['requests==0.14.0', 'docopt==0.5.0'],
+		install_requires = REQUIREMENTS
 		classifiers      = (
 		'Intended Audience :: Developers',
 		'Natural Language :: English',
