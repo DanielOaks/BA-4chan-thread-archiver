@@ -1,7 +1,7 @@
 BA 4chan API Thread Archiver
 ===============
 
-`Github <https://github.com/bibanon/BA-4chan-thread-archiver>`
+`Github <https://github.com/bibanon/BA-4chan-thread-archiver>`_
 
 This script uses the `4chan API <https://github.com/4chan/4chan-API>`_ to:
 
