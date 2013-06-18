@@ -9,6 +9,7 @@ This script uses the `4chan API <https://github.com/4chan/4chan-API>`_ to:
 * Download a JSON dump of thread comments using the 4chan API.
 * Download the HTML page
 * Convert links in HTML to use the downloaded images
+* Download CSS and convert HTML to use them
 * Keep downloading until 404 (with a user-set delay)
 * Can be restarted at any time
 
@@ -72,8 +73,6 @@ More info and a full journal can be found in ``log.md``.
 Wishlist
 =========
 
-* Turn the functions into an independent class
-* Download CSS and convert HTML to use them
 * Prompt user for metadata information.
 * Define the ``.chan.zip`` format for 4chan thread archive transfer
 * Create a PyQt GUI
