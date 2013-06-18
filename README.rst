@@ -1,21 +1,22 @@
 BA 4chan API Thread Archiver
 ===============
 
-This script archives all images, thumbnails, JSON, and converted HTML of a 4chan thread, using the `4chan API <https://github.com/4chan/4chan-API>`_. The script will continue until the thread 404s or the connection is lost.
+`Github <https://github.com/bibanon/BA-4chan-thread-archiver>`
 
-Part of the JSON-based-chanarchiver by Lawrence Wu, built 2012/04/04
+This script uses the `4chan API <https://github.com/4chan/4chan-API>`_ to:
 
-This script:
+* Download all images and/or thumbnails in a certain thread.
+* Download a JSON dump of thread comments using the 4chan API.
+* Download the HTML page
+* Convert links in HTML to use the downloaded images
+* Keep downloading until 404 (with a user-set delay)
+* Can be restarted at any time
 
-* Downloads all images and/or thumbnails in a certain thread.
-* Downloads a JSON dump of thread comments using the 4chan API.
-* Downloads the HTML page
-* Converts links in HTML to use the downloaded images
-* Keeps downloading until 404 (with a user-set delay)
+This script is designed to replace "Right-click Save As, Web Page Complete" when saving 4chan threads, since it does not save full-sized images or JSON. 
 
-* Forked from Socketub's `4chan-thread-archiver. <https://github.com/socketubs/4chan-thread-archiver>`_
+It can also be used as a far lighter, static HTML alternative to Fuuka.
 
-By default, the script saves to the folder ``4chan-saved-threads`` in the current working directory.
+Part of the JSON-based-chanarchiver by Lawrence Wu, built 2013/04/04.
 
 Usage
 ============
@@ -33,6 +34,8 @@ Usage
       --delay=<int>       Delay between thread checks [default: 20]
       -h --help           Show help
       -v --version        Show version
+
+By default, the script saves to the folder ``4chan-saved-threads`` in the current working directory.
 
 Installation
 ============
@@ -54,7 +57,9 @@ Example
 Modifications to original
 ============
 
-This script has changed considerably from the original it was forked from. Here is a list of additions:
+Originally forked from Socketub's `4chan-thread-archiver. <https://github.com/socketubs/4chan-thread-archiver>`_ 
+
+However, all the original has long since been replaced, and the scripts are totally different. Here is a list of additions:
 
 * Based on `py4chan <https://github.com/e000/py-4chan>`_
 * Downloads HTML dump of thread
