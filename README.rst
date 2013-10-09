@@ -41,6 +41,18 @@ By default, the script saves to the folder ``4chan-saved-threads`` in the curren
 Installation
 ============
 
+### Windows
+
+1. Install [Python 2.7.](http://python.org/download/) 32-bit version is recommended
+2. Install [pip1.6](https://sites.google.com/site/pydatalog/python/pip-for-windows) using the linked easy installer.
+3. Follow the instructions on that site to install the package `BA-4chan-thread-archiver`
+
+::
+
+    pip install BA-4chan-thread-archiver
+
+### Linux/Mac
+
 Install Python on your computer. On Linux, Python is almost always preinstalled; however, you will also have to install the program ``pip`` from the repositories.
 
 ::
