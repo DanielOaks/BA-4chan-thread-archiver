@@ -3,7 +3,7 @@
 
 # Part of the JSON-based-chanarchiver by Lawrence Wu, 2012/04/04
 # Originally from https://github.com/socketubs/4chandownloader
-# Rewritten to save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
+# Rewritten from scratch to save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
 
 #
 # Initial release Nov. 5, 2009
@@ -48,10 +48,10 @@ FOURCHAN_THUMBS_URL = 'https://thumbs.4chan.org/%s/thumb/%s' # board, thumb
 FOURCHAN_BOARDS_URL = 'http://boards.4chan.org/%s/res/%s' # board, thread
 
 # folder names for image and thumbnails
-IMAGE_DIR_NAME = "img"
-THUMB_DIR_NAME = "thumb"
+IMAGE_DIR_NAME = "images"
+THUMB_DIR_NAME = "thumbs"
 _CSS_DIR_NAME = "css"
-_DEFAULT_FOLDER = "4chan-saved-threads"
+_DEFAULT_FOLDER = "4chan"
 
 _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
 
@@ -80,7 +80,11 @@ def download_file(fname, dst_folder, file_url):
     else:
 	print('%s already downloaded' % fname)
 
-# Dump all images within a thread from 4chan
+# Dump all images within a thread from 4c
++
++    pip install BA-4chan-thread-archiver
++
++### Linux/Machan
 def dump_images(post, dst_dir, board):
     dst_images_dir = os.path.join(dst_dir, IMAGE_DIR_NAME)
     make_sure_path_exists(dst_images_dir)

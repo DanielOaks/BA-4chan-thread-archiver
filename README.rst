@@ -36,7 +36,7 @@ Usage
       -h --help           Show help
       -v --version        Show version
 
-By default, the script saves to the folder ``4chan-saved-threads`` in the current working directory.
+By default, the script saves to the folder ``4chan`` in the current working directory.
 
 Installation
 ============
@@ -53,7 +53,7 @@ Installation
 
 ### Linux/Mac
 
-Install Python on your computer. On Linux, Python is almost always preinstalled; however, you will also have to install the program ``pip`` from the repositories.
+Install Python on your computer. On Linux, Python is almost always preinstalled; however, you will also have to install the program ``pip`` from the repositories to install the necessary packages.
 
 ::
 
@@ -65,7 +65,7 @@ Example
 
 ::
 
-    4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path=saved-threads --delay 5 --thumbsonly
+    4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path=4chan-threads --delay 5 --thumbsonly
 
 Modifications to original
 ============
