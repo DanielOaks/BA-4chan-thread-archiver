@@ -113,7 +113,7 @@ def dump_css(dst_dir):
 # Dumps thread in raw HTML format to `<thread-id>.html`
 def dump_html(dst_dir, board, thread):
     fourchan_images_regex = re.compile("https?://i.4cdn.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+.4cdn.org/\w+/thumb/")
+    fourchan_thumbs_regex = re.compile("https?://\d+.t.4cdn.org/\w+/thumb/")
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
