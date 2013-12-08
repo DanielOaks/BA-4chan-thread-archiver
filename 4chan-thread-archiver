@@ -97,9 +97,10 @@ def file_replace(fname, pat, s_after):
 	for line in f:
 	    out.write(re.sub(pat, s_after, line))
 	out.close()
+	# FIXME (works on Linux only) - Has a rename error in Windows
 	os.rename(out_fname, fname)
 
-# (REPLACE) Currently uses a static list of links, which works but is not ideal
+# (REPLACE) Currently uses a static list of links, which works but is not ideal. Eventually, we need to create a JSON HTML Templater system.
 def dump_css(dst_dir):
   fourchan_css_regex = re.compile("https://static.4chan.org/css/(\w+)\.\d+.css")
   
