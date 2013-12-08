@@ -23,6 +23,10 @@ import errno
 import requests0 as requests
 import py4chan
 
+
+
+"""=== Docopt Arguments and Documentation ==="""
+
 from docopt import docopt
 
 doc = """4chan-thread-archiver, uses 4chan API to download thread images and/or 
@@ -42,31 +46,62 @@ Options:
   -v --version        Show version
 """
 
-# Links to 4chan URLs (with regex!)
-FOURCHAN_API_URL = 'https://api.4chan.org/%s/res/%s.json' # board, thread
-FOURCHAN_IMAGES_URL = 'https://images.4chan.org/%s/src/%s' # board, image
-FOURCHAN_THUMBS_URL = 'https://thumbs.4chan.org/%s/thumb/%s' # board, thumb
-FOURCHAN_BOARDS_URL = 'http://boards.4chan.org/%s/res/%s' # board, thread
 
-# folder names for image and thumbnails
+
+"""=== Constant Variables and Domain Names to Use ==="""
+
+"""HTTP header: use SSL by default"""
+HTTP_HEADER = 'https://'
+#HTTP_HEADER = #'http://'
+
+""" 4chan top level domain names """
+FOURCHAN_BOARDS = 'boards.4chan.org'
+FOURCHAN_CDN = '4cdn.org'
+
+"""4chan Content Delivery Network domain names (for images, thumbs, api)"""
+FOURCHAN_API = 'a.' + FOURCHAN_CDN
+FOURCHAN_IMAGES = 'i.' + FOURCHAN_CDN
+FOURCHAN_THUMBS = 't.' + FOURCHAN_CDN
+FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
+
+"""Original 4chan cdn links, changed 20131202. Commented here for compatibility purposes.
+http://chrishateswriting.com/post/68794699432/small-things-add-up"""
+#FOURCHAN_API = 'api.4chan.org'
+#FOURCHAN_IMAGES = 'images.4chan.org'
+#FOURCHAN_THUMBS = 'thumbs.4chan.org'
+#FOURCHAN_STATIC = 'static.4chan.org'
+
+"""Full HTTP Links to 4chan servers. Format is (boards, object_id)"""
+FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + '/%s/res/%s'
+FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + '/%s/res/%s.json'
+FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + '/%s/src/%s'
+FOURCHAN_THUMBS_URL = HTTP_HEADER + FOURCHAN_THUMBS + '/%s/thumb/%s'
+
+""" default folder names for image and thumbnails """
+_DEFAULT_FOLDER = "4chan"
 _IMAGE_DIR_NAME = "images"
 _THUMB_DIR_NAME = "thumbs"
 _CSS_DIR_NAME = "css"
-_DEFAULT_FOLDER = "4chan"
 
-_DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
 
-# Recursively create paths if they don't exist 
-# replace with `os.makedirs(path,exist_ok=True)` in python3
+
 def make_sure_path_exists(path):
+    """ Recursively create folder paths if they don't exist 
+
+    (replace) with `os.makedirs(path,exist_ok=True)` in python3
+
+    """
     try:
 	os.makedirs(path)
     except OSError as exception:
 	if exception.errno != errno.EEXIST:
 	    raise
 
-# Download any file using requests
+
+
 def download_file(fname, dst_folder, file_url):
+    """ (FIXME) Download any file using requests0. Needs update """
+    
     # Destination of downloaded file
     file_dst = os.path.join(dst_folder, fname)
     
@@ -81,10 +116,16 @@ def download_file(fname, dst_folder, file_url):
     else:
 	print('%s already downloaded' % fname)
 
-# File in place regex function originally scripted by steveha on StackOverflow: 
-# http://stackoverflow.com/questions/1597649/replace-strings-in-files-by-python
-# Notice: `\1` notation could be interpreted by python as `\x01`! Escape it with a second backslash: `\\1`  
+
+
 def file_replace(fname, pat, s_after):
+    """ File in place regex function
+
+    originally scripted by steveha on StackOverflow: http://stackoverflow.com/questions/1597649/replace-strings-in-files-by-python
+
+    Notice: `\1` notation could be interpreted by python as `\x01`! Escape it with a second backslash: `\\1`
+
+    """
     # first, see if the pattern is even in the file.
     with open(fname) as f:
 	if not any(re.search(pat, line) for line in f):
@@ -97,24 +138,39 @@ def file_replace(fname, pat, s_after):
 	for line in f:
 	    out.write(re.sub(pat, s_after, line))
 	out.close()
-	# FIXME (works on Linux only) - Has a rename error in Windows
+	# FIXME Works on Linux only. Has a rename error in Windows
 	os.rename(out_fname, fname)
 
-# (REPLACE) Currently uses a static list of links, which works but is not ideal. Eventually, we need to create a JSON HTML Templater system.
-def dump_css(dst_dir):
-  fourchan_css_regex = re.compile("https://static.4chan.org/css/(\w+)\.\d+.css")
-  
-  # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
-  css_list = ["https://static.4chan.org/css/yotsubluemobile.473.css", "https://static.4chan.org/css/yotsubluenew.473.css", "https://static.4chan.org/css/yotsubanew.473.css", "https://static.4chan.org/css/futabanew.473.css", "https://static.4chan.org/css/burichannew.473.css", "https://static.4chan.org/css/photon.473.css", "https://static.4chan.org/css/tomorrow.473.css"]
-  
-  for css_url in css_list:
-    css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
-    download_file(css_name, dst_dir, css_url)
 
-# Dumps thread in raw HTML format to `<thread-id>.html`
+
+def dump_css(dst_dir):
+    """ Dumps the CSS from 4cdn.
+
+    (FIXME) Currently uses a static list of links, which works but is not ideal. Eventually, we need to create a JSON HTML Templater system.
+
+    """
+    fourchan_css_regex = re.compile("https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css")
+    
+    # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
+    css_list = [HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluemobile.473.css",
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluenew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubanew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/futabanew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/burichannew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/photon.473.css",
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
+    
+    for css_url in css_list:
+      css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
+      download_file(css_name, dst_dir, css_url)
+
+
+
 def dump_html(dst_dir, board, thread):
-    fourchan_images_regex = re.compile("https?://i.4cdn.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+.t.4cdn.org/\w+/thumb/")
+    """ Dumps thread in raw HTML format to `<thread-id>.html` """
+    
+    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
@@ -131,21 +187,26 @@ def dump_html(dst_dir, board, thread):
     dump_css(dst_css_dir)
     
     # convert HTML links to use local CSS files that we just downloaded
-    # (FUTURE) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
-    file_replace(html_path, "https?://static.4chan.org/css/(\w+)\.\d+.css", "css/\\1.css")
+    # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
+    file_replace(html_path, "https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css", "css/\\1.css")
 
-# Grab thread JSON from 4chan API
+
+
 def dump_json(dst_dir, board, thread):
+    """ Grab thread JSON from 4chan API """
+    
     json_filename = "%s.json" % thread
     json_path = os.path.join(dst_dir, json_filename)
     
     json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
     json.dump(json_thread.json, open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
-	  
-# Get all external links quoted in comments
+
+
+
 def list_external_links(curr_thread, dst_dir):
-    # The Ultimate URL Regex
-    # http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python
+    """ Get all external links quoted in comments """
+    
+    # `The Ultimate URL Regex` <http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python>_
     linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
 
     # File to store list of all external links quoted in comments (overwrite upon each loop iteration)
@@ -169,8 +230,10 @@ def list_external_links(curr_thread, dst_dir):
     # Close linklist file after loop
     linklist_file.close()
 
-# Download images, thumbs, and gather links to external urls
+
+
 def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
+    """ Download images, thumbs, and gather links to external urls """
 
     # Create and set destination folders
     dst_images_dir = os.path.join(dst_dir, _IMAGE_DIR_NAME)
@@ -178,9 +241,13 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
     dst_thumbs_dir = os.path.join(dst_dir, _THUMB_DIR_NAME)
     make_sure_path_exists(dst_thumbs_dir)
     
-    # regex for obtaining filenames
+    # regex for obtaining filenames from py4chan (legacy)
     fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
     fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
+    
+    # regex for obtaining filenames from py4chan (new py4chan)
+    #fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    #fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
     
     if (thumbsonly == False):
       # Dump all images within a thread from 4chan
@@ -194,7 +261,11 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
 	thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
 	download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
+
+
 def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
+    """ Dump the thread using the functions defined above """
+    
     # Create paths if they don't exist
     make_sure_path_exists(dst_dir)
     
@@ -210,14 +281,22 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
     # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
     dump_json(dst_dir, board, thread)
 
-# Timestamp
-# http://www.interfaceware.com/manual/timestamps_with_milliseconds.html
+
+
 def timestamp():
-   now = time.time()
-   localtime = time.localtime(now)
-   return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
+    """ `Timestamp` <http://www.interfaceware.com/manual/timestamps_with_milliseconds.html>_ """
+    now = time.time()
+    localtime = time.localtime(now)
+    return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
+
+
 
 def main(args):
+    """ Check 4chan API for new content, and recursively dump thread """
+    
+    # Message to display upon completion
+    _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
+    
     # Copy data from arguments
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
@@ -283,6 +362,9 @@ def main(args):
     
     print(_DUMP_COMPLETE_STRING)
 
+
+
+""" Use docopt to get arguments, and run main function """
 if __name__ == '__main__':
   args = docopt(doc, version=0.3)
   main(args)
