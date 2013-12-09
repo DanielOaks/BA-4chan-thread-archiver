@@ -41,17 +41,6 @@ By default, the script saves to the folder ``4chan`` in the current working dire
 Installation
 ============
 
-Windows
--------
-
-1. Install `Python 2.7.` <http://python.org/download/>_ 32-bit version is recommended
-2. Install `pip1.6` <https://sites.google.com/site/pydatalog/python/pip-for-windows> using the linked easy installer.
-3. Follow the instructions on that site to install the package `BA-4chan-thread-archiver`
-
-::
-
-    pip install BA-4chan-thread-archiver
-
 Linux/Mac
 ---------
 
@@ -60,6 +49,19 @@ Install Python on your computer. On Linux, Python is almost always preinstalled;
 ::
 
     easy_install pip
+    pip install BA-4chan-thread-archiver
+
+Windows
+-------
+
+> **Note:** Unfortunately, this script just flat out fails to run in Windows. We need some help figuring out why...
+
+1. Install `Python 2.7.` <http://python.org/download/>_ 32-bit version is recommended
+2. Install `pip1.6` <https://sites.google.com/site/pydatalog/python/pip-for-windows> using the linked easy installer.
+3. Follow the instructions on that site to install the package `BA-4chan-thread-archiver`
+
+::
+
     pip install BA-4chan-thread-archiver
     
 Example
