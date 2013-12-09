@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Part of the JSON-based-chanarchiver by Lawrence Wu, 2012/04/04
-# Originally from https://github.com/socketubs/4chandownloader
-# Rewritten from scratch to save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
+# BA 4chan-thread-archiver
+#
+# Built for the Bibliotheca Anonoma by Lawrence Wu, 2012/04/04
+# Rewritten from scratch to use py4chan API wrapper, save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
+# Formerly based on https://github.com/socketubs/4chandownloader
 
 #
 # Initial release Nov. 5, 2009
@@ -24,9 +26,9 @@ import requests0 as requests
 
 from docopt import docopt
 
-doc = """4chan-thread-archiver-orig, uses 4chan API to download thread images and/or 
-thumbnails, along with thread HTML, JSON, and a list of referenced external
-links. Does not use the py4chan library.
+doc = """4chan-thread-archiver-old, uses 4chan API (without py4chan wrapper) 
+to download thread images and/or thumbnails, along with thread HTML, JSON,
+and a list of referenced external links.
 
 Usage:
   4chan-thread-archiver-orig <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly]
@@ -41,17 +43,43 @@ Options:
   -v --version        Show version
 """
 
-# paths to 4chan URLs (with regex!)
-FOURCHAN_API_URL = 'https://a.4cdn.org/%s/res/%s.json' # board, thread
-FOURCHAN_IMAGES_URL = 'https://i.4cdn.org/%s/src/%s' # board, image
-FOURCHAN_THUMBS_URL = 'https://t.4cdn.org/%s/thumb/%s' # board, thumb
-FOURCHAN_BOARDS_URL = 'https://boards.4chan.org/%s/res/%s' # board, thread
+"""=== Constant Variables and Domain Names to Use ==="""
 
-# folder names for image and thumbnails
-IMAGE_DIR_NAME = "images"
-THUMB_DIR_NAME = "thumbs"
-_CSS_DIR_NAME = "css"
+""" Important Message Front Tag """
+_TAG = " :: "
+
+""" HTTP header: use SSL by default """
+HTTP_HEADER = 'https://'
+#HTTP_HEADER = #'http://'
+
+""" 4chan top level domain names """
+FOURCHAN_BOARDS = 'boards.4chan.org'
+FOURCHAN_CDN = '4cdn.org'
+
+"""4chan Content Delivery Network domain names (for images, thumbs, api)"""
+FOURCHAN_API = 'a.' + FOURCHAN_CDN
+FOURCHAN_IMAGES = 'i.' + FOURCHAN_CDN
+FOURCHAN_THUMBS = 't.' + FOURCHAN_CDN
+FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
+
+"""Original 4chan cdn links, changed 20131202. Commented here for compatibility purposes.
+http://chrishateswriting.com/post/68794699432/small-things-add-up"""
+#FOURCHAN_API = 'api.4chan.org'
+#FOURCHAN_IMAGES = 'images.4chan.org'
+#FOURCHAN_THUMBS = 'thumbs.4chan.org'
+#FOURCHAN_STATIC = 'static.4chan.org'
+
+"""Full HTTP Links to 4chan servers. Format is (boards, object_id)"""
+FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + '/%s/res/%s'
+FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + '/%s/res/%s.json'
+FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + '/%s/src/%s'
+FOURCHAN_THUMBS_URL = HTTP_HEADER + FOURCHAN_THUMBS + '/%s/thumb/%s'
+
+""" default folder names for image and thumbnails """
 _DEFAULT_FOLDER = "4chan"
+_IMAGE_DIR_NAME = "images"
+_THUMB_DIR_NAME = "thumbs"
+_CSS_DIR_NAME = "css"
 
 _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
 
@@ -117,22 +145,33 @@ def file_replace(fname, pat, s_after):
 	out.close()
 	os.rename(out_fname, fname)
 
-# (REPLACE) Currently uses a static list of links, which works but is not ideal
 def dump_css(dst_dir):
-  fourchan_css_regex = re.compile("https?://static.4chan.org/css/(\w+)\.\d+.css")
-  
-  # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
-  css_list = ["https://static.4chan.org/css/yotsubluemobile.473.css", "https://static.4chan.org/css/yotsubluenew.473.css", "https://static.4chan.org/css/yotsubanew.473.css", "https://static.4chan.org/css/futabanew.473.css", "https://static.4chan.org/css/burichannew.473.css", "https://static.4chan.org/css/photon.473.css", "https://static.4chan.org/css/tomorrow.473.css"]
-  
-  for css_url in css_list:
-    css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
-    download_file(css_name, dst_dir, css_url)
+    """ Dumps the CSS from 4cdn.
+
+    (FIXME) Currently uses a static list of links, which works but is not ideal. Eventually, we need to create a JSON HTML Templater system.
+
+    """
+    fourchan_css_regex = re.compile("https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css")
+    
+    # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
+    css_list = [HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluemobile.473.css",
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluenew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubanew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/futabanew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/burichannew.473.css", 
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/photon.473.css",
+    HTTP_HEADER + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
+    
+    for css_url in css_list:
+      css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
+      download_file(css_name, dst_dir, css_url)
 
 
-# Dumps thread in raw HTML format to `<thread-id>.html`
 def dump_html(dst_dir, board, thread):
-    fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
+    """ Dumps thread in raw HTML format to `<thread-id>.html` """
+    
+    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
@@ -140,8 +179,8 @@ def dump_html(dst_dir, board, thread):
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)
     file_replace(html_path, '"//', '"http://')
-    file_replace(html_path, fourchan_images_regex, IMAGE_DIR_NAME + "/")
-    file_replace(html_path, fourchan_thumbs_regex, THUMB_DIR_NAME + "/")
+    file_replace(html_path, fourchan_images_regex, _IMAGE_DIR_NAME + "/")
+    file_replace(html_path, fourchan_thumbs_regex, _THUMB_DIR_NAME + "/")
     
     # Download a local copy of all CSS files
     dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
@@ -149,8 +188,8 @@ def dump_html(dst_dir, board, thread):
     dump_css(dst_css_dir)
     
     # convert HTML links to use local CSS files that we just downloaded
-    # (FUTURE) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
-    file_replace(html_path, "https?://static.4chan.org/css/(\w+)\.\d+.css", "css/\\1.css")
+    # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
+    file_replace(html_path, "https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css", "css/\\1.css")
 
 # Grab thread JSON from 4chan API
 def dump_json(dst_dir, board, thread):

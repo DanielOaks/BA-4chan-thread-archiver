@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Part of the JSON-based-chanarchiver by Lawrence Wu, 2012/04/04
-# Originally from https://github.com/socketubs/4chandownloader
-# Rewritten from scratch to save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
+# BA 4chan-thread-archiver
+#
+# Built for the Bibliotheca Anonoma by Lawrence Wu, 2012/04/04
+# Rewritten from scratch to use py4chan API wrapper, save in seperate images folder, download plain HTML, modularization, comments, and code cleanup
+# Formerly based on https://github.com/socketubs/4chandownloader
 
 #
 # Initial release Nov. 5, 2009
@@ -29,9 +31,9 @@ import py4chan
 
 from docopt import docopt
 
-doc = """4chan-thread-archiver, uses 4chan API to download thread images and/or 
-thumbnails, along with thread HTML, JSON, and a list of referenced external
-links. Uses the py4chan library.
+doc = """BA-4chan-thread-archiver. Uses the 4chan API (with the py4chan wrapper) 
+to download thread images and/or thumbnails, along with thread HTML, JSON,
+and a list of referenced external links.
 
 Usage:
   4chan-thread-archiver <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly]
@@ -87,6 +89,8 @@ _THUMB_DIR_NAME = "thumbs"
 _CSS_DIR_NAME = "css"
 
 
+
+"""=== Functions ==="""
 
 def make_sure_path_exists(path):
     """ Recursively create folder paths if they don't exist 
@@ -293,6 +297,8 @@ def timestamp():
     return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
 
 
+
+"""=== Main Function ==="""
 
 def main(args):
     """ Check 4chan API for new content, and recursively dump thread """

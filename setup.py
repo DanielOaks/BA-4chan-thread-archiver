@@ -15,7 +15,7 @@ if sys.argv[-1] == 'publish':
 
 setup(
 		name             = 'BA-4chan-thread-archiver',
-		version          = '0.5.1',
+		version          = '0.6',
 		description      = '4chan API-based complete thread archiver',
 		long_description = open('README.rst').read(), 
 		license          = open('LICENSE').read(),
@@ -23,7 +23,7 @@ setup(
 		author_email     = 'sagnessagiel@gmail.com',
 		url              = 'https://github.com/bibanon/4chandownloader',
 		keywords         = '4chan downloader images json dump',
-		scripts          = ['4chan-thread-archiver', '4chan-thread-archiver-orig'],
+		scripts          = ['4chan-thread-archiver', '4chan-thread-archiver-old'],
 		install_requires = ['requests-transition', 'docopt==0.5.0', 'py-4chan'],
 		classifiers      = (
 		'Intended Audience :: Developers',
