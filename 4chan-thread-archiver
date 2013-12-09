@@ -50,7 +50,10 @@ Options:
 
 """=== Constant Variables and Domain Names to Use ==="""
 
-"""HTTP header: use SSL by default"""
+""" Important Message Front Tag """
+_TAG = " :: "
+
+""" HTTP header: use SSL by default """
 HTTP_HEADER = 'https://'
 #HTTP_HEADER = #'http://'
 
@@ -295,9 +298,9 @@ def main(args):
     """ Check 4chan API for new content, and recursively dump thread """
     
     # Message to display upon completion
-    _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun this script again."
+    _DUMP_COMPLETE_STRING = " :: Dump complete. To resume dumping the same thread,\nrun this script again."
     
-    # Copy data from arguments
+    # Copy data from docopt arguments
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
     path   = args.get('--path')
@@ -305,62 +308,76 @@ def main(args):
     thumbsonly = args.get('--thumbsonly', False)
     delay  = args.get('--delay')
 
+
     # Set a default path if none is given
     if (path == None):
       path = os.path.join(os.getcwd() + os.path.sep + _DEFAULT_FOLDER)
       
-    # Destination directory
+    # Set destination directory
     dst_dir = os.path.join(path, board, thread)
 
-    # Initiate py4chan object
+
+    # Initialize py4chan Board object
     curr_board = py4chan.Board(board)
-    curr_thread = curr_board.getThread(int(thread))
+    
+    # Check if the thread exists, then create py4chan thread object
+    if (curr_board.threadExists(int(thread))):
+      curr_thread = curr_board.getThread(int(thread))
+    else:
+      # Stop the script if the thread is not found
+      print(_TAG + "Thread %s not found." % thread)
+      print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
+      raise SystemExit(0)
 
-    # Switch to tell first run
-    firstIteration = True
 
-    # Command line header
-    print(' :: Board : 4chan /%s/' % board)
-    print(' :: Thread: %s' % thread)
-    print(' :: Folder: %s' % dst_dir)
+    # header
+    print(_TAG + 'Board : 4chan /%s/' % board)
+    print(_TAG + 'Thread: %s' % thread)
+    print(_TAG + 'Folder: %s' % dst_dir)
 
-    # try/except to handle Ctrl-C
+
+    # Using try/except loop to handle Ctrl-C
     try:
+      # Switch to check for first run
+      firstIteration = True
+      
       while 1:
 	  # don't run this code the first time
 	  if (firstIteration == False):
 	      # Wait to execute code again
-	      print("\nWaiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
+	      print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
 	      time.sleep(int(delay))
 	      
 	      if curr_thread.is_404:
-		print("%s - [Thread 404'ed or Connection Lost]" % timestamp())
-		break
+		# Stop when thread gets 404'ed
+		print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
+		print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
+		raise SystemExit(0)
+		
 	      
 	      # Update thread and check if new replies have appeared
 	      newReplies = curr_thread.update()
 	      if (newReplies == 0):
-		print("%s - [No new posts.]" % timestamp())
+		print(_TAG + "%s - [No new posts.]" % timestamp())
 		continue
 	      else:
-		print("%s - [%s new post(s) found!]" % (timestamp(), newReplies))
+		print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), newReplies))
 		
-	      # If all tests are OK, dump thread
+	      # If all tests are OK, dump thread again
 	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
 		
 	  else:
-	      # The actual dumping
+	      # dump thread for the first time
 	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
 	      
 	      # first iteration is complete
 	      firstIteration = False
 	    
     except KeyboardInterrupt:
+      """ Stop try/except loop when [Ctrl-C] is pressed"""
       print("\n")
-      print(_DUMP_COMPLETE_STRING)
+      print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
       raise SystemExit(0)
-    
-    print(_DUMP_COMPLETE_STRING)
 
 
 
