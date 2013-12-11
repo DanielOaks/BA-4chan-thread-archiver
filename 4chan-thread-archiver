@@ -249,12 +249,12 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
     make_sure_path_exists(dst_thumbs_dir)
     
     # regex for obtaining filenames from py4chan (legacy)
-    fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
+    #fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
+    #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
     
     # regex for obtaining filenames from py4chan (new py4chan)
-    #fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
-    #fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
+    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
     
     if (thumbsonly == False):
       # Dump all images within a thread from 4chan
