@@ -87,10 +87,10 @@ _DUMP_COMPLETE_STRING = "Dump complete. To resume dumping the same thread,\nrun 
 # replace with `os.makedirs(path,exist_ok=True)` in python3
 def make_sure_path_exists(path):
     try:
-	os.makedirs(path)
+      os.makedirs(path)
     except OSError as exception:
-	if exception.errno != errno.EEXIST:
-	    raise
+      if exception.errno != errno.EEXIST:
+        raise
 
 # Download any file using requests
 def download_file(fname, dst_folder, file_url):
@@ -99,14 +99,14 @@ def download_file(fname, dst_folder, file_url):
     
     # If the file doesn't exist, download it
     if not os.path.exists(file_dst):
-	print('%s downloading...' % fname)
-	i = requests.get(file_url)
-	if i.status_code == 404:
-	    print(' | Failed, try later (%s)' % file_url)
-	else:
-	    open(file_dst, 'w').write(i.content)
+      print('%s downloading...' % fname)
+      i = requests.get(file_url)
+      if i.status_code == 404:
+        print(' | Failed, try later (%s)' % file_url)
+      else:
+        open(file_dst, 'w').write(i.content)
     else:
-	print('%s already downloaded' % fname)
+      print('%s already downloaded' % fname)
 
 def dump_images(post, dst_dir, board):
     dst_images_dir = os.path.join(dst_dir, IMAGE_DIR_NAME)
@@ -133,17 +133,19 @@ def dump_thumbs(post, dst_dir, board):
 def file_replace(fname, pat, s_after):
     # first, see if the pattern is even in the file.
     with open(fname) as f:
-	if not any(re.search(pat, line) for line in f):
-	    return # pattern does not occur in file so we are done.
+      if not any(re.search(pat, line) for line in f):
+        return              # pattern does not occur in file so we are done.
 
     # pattern is in the file, so perform replace operation.
     with open(fname) as f:
-	out_fname = fname + ".tmp"
-	out = open(out_fname, "w")
-	for line in f:
-	    out.write(re.sub(pat, s_after, line))
-	out.close()
-	os.rename(out_fname, fname)
+      
+      out_fname = fname + ".tmp"
+      out = open(out_fname, "w")
+      for line in f:
+        out.write(re.sub(pat, s_after, line))
+        
+      out.close()
+      os.rename(out_fname, fname)
 
 def dump_css(dst_dir):
     """ Dumps the CSS from 4cdn.
@@ -201,6 +203,7 @@ def dump_json(dst_dir, board, thread):
 	  
 # Get all external links quoted in comments
 def list_external_links(json_thread, dst_dir):
+  
     # The Ultimate URL Regex
     # http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python
     linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
@@ -210,20 +213,22 @@ def list_external_links(json_thread, dst_dir):
     linklist_file = open(linklist_dst, "w")
 
     for post in json_thread.json['posts']:
-	# comments are optional in 4chan API
-	if "com" not in post:
-	    continue
-	# skip to the next post if links are not found
-	if not linkregex.search(post['com']):
-	    continue
-	else:
-	    # We need to get rid of all <wbr> tags before parsing
-	    cleaned_com = re.sub(r'\<wbr\>', '', post['com'])
-	    linklist = re.findall(linkregex, cleaned_com)
-	    for item in linklist:
-		print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
-		linklist_file.write(item[0])	# re.findall creates tuple
-		linklist_file.write('\n')	# subdivide with newlines
+      # comments are optional in 4chan API
+      if "com" not in post:
+        continue
+      
+      # skip to the next post if links are not found
+      if not linkregex.search(post['com']):
+        continue
+      
+      else:
+        # We need to get rid of all <wbr> tags before parsing
+        cleaned_com = re.sub(r'\<wbr\>', '', post['com'])
+        linklist = re.findall(linkregex, cleaned_com)
+        for item in linklist:
+          print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
+          linklist_file.write(item[0])	# re.findall creates tuple
+          linklist_file.write('\n')	# subdivide with newlines
 
     # Close linklist file after loop
     linklist_file.close()
@@ -235,23 +240,24 @@ def get_files(dst_dir, board, thread, nothumbs, thumbsonly):
     json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
     
     for post in json_thread.json['posts']:
-	if post.get('filename', False):
-	    # If file is deleted, move on
-	    if post.get('filedeleted', False):
-		continue
+      if post.get('filename', False):
+        # If file is deleted, move on
+        if post.get('filedeleted', False):
+          continue
 
-	    # Download images, if not only downloading thumbnails
-	    if not thumbsonly:
-		dump_images(post, dst_dir, board)
+        # Download images, if not only downloading thumbnails
+        if not thumbsonly:
+          dump_images(post, dst_dir, board)
 
-	    # Download thumbnails by default, but not if user doesn't want it
-	    if thumbsonly or (not nothumbs):
-		dump_thumbs(post, dst_dir, board)
+        # Download thumbnails by default, but not if user doesn't want it
+        if thumbsonly or (not nothumbs):
+          dump_thumbs(post, dst_dir, board)
 
     # Get all external links quoted in comments
     list_external_links(json_thread, dst_dir)
 
 def main(args):
+  
     # Copy data from arguments
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
@@ -268,25 +274,25 @@ def main(args):
     try:
       # Begin file dump loop
       while 1:
-	  print(' :: Board: %s' % board)
-	  print(' :: Thread: %s' % thread)
-	  
-	  # Create paths if they don't exist
-	  dst_dir = os.path.join(path, board, thread)
-	  make_sure_path_exists(dst_dir)
-	  
-	  # Download images, thumbs, and gather links to external urls 
-	  get_files(dst_dir, board, thread, nothumbs, thumbsonly)
+        print(' :: Board: %s' % board)
+        print(' :: Thread: %s' % thread)
+        
+        # Create paths if they don't exist
+        dst_dir = os.path.join(path, board, thread)
+        make_sure_path_exists(dst_dir)
+        
+        # Download images, thumbs, and gather links to external urls 
+        get_files(dst_dir, board, thread, nothumbs, thumbsonly)
 
-	  # Dumps thread in raw HTML format to `<thread-id>.html`
-	  dump_html(dst_dir, board, thread)
-	  
-	  # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
-	  dump_json(dst_dir, board, thread)
-	  
-	  # Wait to execute code again
-	  print("Waiting %s seconds before retrying (Type Ctrl-C to stop)\n" % delay)
-	  time.sleep(int(delay))
+        # Dumps thread in raw HTML format to `<thread-id>.html`
+        dump_html(dst_dir, board, thread)
+        
+        # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
+        dump_json(dst_dir, board, thread)
+        
+        # Wait to execute code again
+        print("Waiting %s seconds before retrying (Type Ctrl-C to stop)\n" % delay)
+        time.sleep(int(delay))
 
     except KeyboardInterrupt:
       print("\n")

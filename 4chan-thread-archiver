@@ -99,10 +99,10 @@ def make_sure_path_exists(path):
 
     """
     try:
-	os.makedirs(path)
+        os.makedirs(path)
     except OSError as exception:
-	if exception.errno != errno.EEXIST:
-	    raise
+        if exception.errno != errno.EEXIST:
+            raise
 
 
 
@@ -114,14 +114,14 @@ def download_file(fname, dst_folder, file_url):
     
     # If the file doesn't exist, download it
     if not os.path.exists(file_dst):
-	print('%s downloading...' % fname)
-	i = requests.get(file_url)
-	if i.status_code == 404:
-	    print(' | Failed, try later (%s)' % file_url)
-	else:
-	    open(file_dst, 'w').write(i.content)
+        print('%s downloading...' % fname)
+        i = requests.get(file_url)
+        if i.status_code == 404:
+            print(' | Failed, try later (%s)' % file_url)
+        else:
+            open(file_dst, 'w').write(i.content)
     else:
-	print('%s already downloaded' % fname)
+        print('%s already downloaded' % fname)
 
 
 
@@ -135,18 +135,18 @@ def file_replace(fname, pat, s_after):
     """
     # first, see if the pattern is even in the file.
     with open(fname) as f:
-	if not any(re.search(pat, line) for line in f):
-	    return # pattern does not occur in file so we are done.
+        if not any(re.search(pat, line) for line in f):
+            return # pattern does not occur in file so we are done.
 
     # pattern is in the file, so perform replace operation.
     with open(fname) as f:
-	out_fname = fname + ".tmp"
-	out = open(out_fname, "w")
-	for line in f:
-	    out.write(re.sub(pat, s_after, line))
-	out.close()
-	# FIXME Works on Linux only. Has a rename error in Windows
-	os.rename(out_fname, fname)
+        out_fname = fname + ".tmp"
+        out = open(out_fname, "w")
+        for line in f:
+            out.write(re.sub(pat, s_after, line))
+        out.close()
+        # FIXME Works on Linux only. Has a rename error in Windows
+        os.rename(out_fname, fname)
 
 
 
@@ -222,17 +222,17 @@ def list_external_links(curr_thread, dst_dir):
 
     for reply in curr_thread.replies:
       if (reply.Comment == None):
-	  continue
+          continue
       if not linkregex.search(reply.Comment):
-	  continue
+          continue
       else:
-	  # We need to get rid of all <wbr> tags before parsing
-	  cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
-	  linklist = re.findall(linkregex, cleaned_com)
-	  for item in linklist:
-	      print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
-	      linklist_file.write(item[0])	# re.findall creates tuple
-	      linklist_file.write('\n')	# subdivide with newlines
+          # We need to get rid of all <wbr> tags before parsing
+          cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
+          linklist = re.findall(linkregex, cleaned_com)
+          for item in linklist:
+              print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
+              linklist_file.write(item[0])	# re.findall creates tuple
+              linklist_file.write('\n')	# subdivide with newlines
 
     # Close linklist file after loop
     linklist_file.close()
@@ -259,14 +259,14 @@ def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
     if (thumbsonly == False):
       # Dump all images within a thread from 4chan
       for image_url in curr_thread.Files():
-	image_name = re.sub(fourchan_images_regex, '', image_url)
-	download_file(image_name, dst_images_dir, image_url)
+        image_name = re.sub(fourchan_images_regex, '', image_url)
+        download_file(image_name, dst_images_dir, image_url)
 
     if thumbsonly or (nothumbs == False):
       # Dump all thumbnails within a thread from 4chan
       for thumb_url in curr_thread.Thumbs():
-	thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
-	download_file(thumb_name, dst_thumbs_dir, thumb_url)
+        thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
+        download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
 
 
@@ -348,37 +348,37 @@ def main(args):
       firstIteration = True
       
       while 1:
-	  # don't run this code the first time
-	  if (firstIteration == False):
-	      # Wait to execute code again
-	      print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
-	      time.sleep(int(delay))
-	      
-	      if curr_thread.is_404:
-		# Stop when thread gets 404'ed
-		print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
-		print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
-		raise SystemExit(0)
-		
-	      
-	      # Update thread and check if new replies have appeared
-	      newReplies = curr_thread.update()
-	      if (newReplies == 0):
-		print(_TAG + "%s - [No new posts.]" % timestamp())
-		continue
-	      else:
-		print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), newReplies))
-		
-	      # If all tests are OK, dump thread again
-	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
-		
-	  else:
-	      # dump thread for the first time
-	      dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
-	      
-	      # first iteration is complete
-	      firstIteration = False
-	    
+          # don't run this code the first time
+          if (firstIteration == False):
+              # Wait to execute code again
+              print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
+              time.sleep(int(delay))
+              
+              if curr_thread.is_404:
+                # Stop when thread gets 404'ed
+                print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
+                print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
+                raise SystemExit(0)
+                
+              
+              # Update thread and check if new replies have appeared
+              newReplies = curr_thread.update()
+              if (newReplies == 0):
+                print(_TAG + "%s - [No new posts.]" % timestamp())
+                continue
+              else:
+                print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), newReplies))
+                
+              # If all tests are OK, dump thread again
+              dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
+                
+          else:
+              # dump thread for the first time
+              dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
+              
+              # first iteration is complete
+              firstIteration = False
+          
     except KeyboardInterrupt:
       """ Stop try/except loop when [Ctrl-C] is pressed"""
       print("\n")
