@@ -63,20 +63,28 @@ HTTP_HEADER = 'https://'
 FOURCHAN_BOARDS = 'boards.4chan.org'
 FOURCHAN_CDN = '4cdn.org'
 
-"""4chan Content Delivery Network domain names (for images, thumbs, api)"""
+"""
+    4chan Content Delivery Network domain names (for images, thumbs, api)
+"""
 FOURCHAN_API = 'a.' + FOURCHAN_CDN
 FOURCHAN_IMAGES = 'i.' + FOURCHAN_CDN
 FOURCHAN_THUMBS = 't.' + FOURCHAN_CDN
 FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
 
-"""Original 4chan cdn links, changed 20131202. Commented here for compatibility purposes.
-http://chrishateswriting.com/post/68794699432/small-things-add-up"""
+"""
+    Original 4chan cdn links, changed 20131202.
+    Commented here for compatibility purposes.
+    http://chrishateswriting.com/post/68794699432/small-things-add-up
+"""
 #FOURCHAN_API = 'api.4chan.org'
 #FOURCHAN_IMAGES = 'images.4chan.org'
 #FOURCHAN_THUMBS = 'thumbs.4chan.org'
 #FOURCHAN_STATIC = 'static.4chan.org'
 
-"""Full HTTP Links to 4chan servers. Format is (boards, object_id)"""
+"""
+    Full HTTP Links to 4chan servers.
+    Format is (boards, object_id)
+"""
 FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + '/%s/res/%s'
 FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + '/%s/res/%s.json'
 FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + '/%s/src/%s'
@@ -93,10 +101,11 @@ _CSS_DIR_NAME = "css"
 """=== Functions ==="""
 
 def make_sure_path_exists(path):
-    """ Recursively create folder paths if they don't exist 
+    """
+        Recursively create folder paths if they don't exist 
+        (update) with `os.makedirs(path,exist_ok=True)` in python3
 
-    (replace) with `os.makedirs(path,exist_ok=True)` in python3
-
+        :param path: os.path object to file
     """
     try:
       os.makedirs(path)
@@ -108,7 +117,13 @@ def make_sure_path_exists(path):
 
 
 def download_file(fname, dst_folder, file_url):
-    """ (FIXME) Download any file using requests0. Needs update """
+    """
+        (FIXME) Download any file using requests0. Needs update
+
+        :param fname: filename string
+        :param dst_folder: output folder string
+        :param file_url: url to download from, string
+    """
     
     # Destination of downloaded file
     file_dst = os.path.join(dst_folder, fname)
@@ -129,12 +144,15 @@ def download_file(fname, dst_folder, file_url):
 
 
 def file_replace(fname, pat, s_after):
-    """ File in place regex function
+    """
+        File in place regex function
+        originally scripted by steveha on StackOverflow
+        http://stackoverflow.com/questions/1597649/replace-strings-in-files-by-python
+        Notice: `\1` notation could be interpreted by python as `\x01`! Escape it with a second backslash: `\\1`
 
-    originally scripted by steveha on StackOverflow: http://stackoverflow.com/questions/1597649/replace-strings-in-files-by-python
-
-    Notice: `\1` notation could be interpreted by python as `\x01`! Escape it with a second backslash: `\\1`
-
+        :param fname: filename string
+        :param pat: regex pattern to search for, as a string
+        :param s_after: what to replace pattern in file with, string
     """
     # first, see if the pattern is even in the file.
     with open(fname) as f:
@@ -156,10 +174,12 @@ def file_replace(fname, pat, s_after):
 
 
 def dump_css(dst_dir):
-    """ Dumps the CSS from 4cdn.
+    """
+        Dumps the CSS from 4cdn.
+        (FIXME) Currently uses a static list of links, which works but is not ideal.
+        Eventually, we need to create a JSON HTML Templater system.
 
-    (FIXME) Currently uses a static list of links, which works but is not ideal. Eventually, we need to create a JSON HTML Templater system.
-
+        :param dst_dir: string, destination folder name (not path)
     """
     fourchan_css_regex = re.compile("https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css")
     
@@ -179,7 +199,13 @@ def dump_css(dst_dir):
 
 
 def dump_html(dst_dir, board, thread):
-    """ Dumps thread in raw HTML format to `<thread-id>.html` """
+    """
+        Dumps thread in raw HTML format to `<thread-id>.html`
+
+        :param dst_dir: string, destination folder name (not path)
+        :param board: string, board name
+        :param thread: string, thread id
+    """
     
     fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
     fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
@@ -205,7 +231,13 @@ def dump_html(dst_dir, board, thread):
 
 
 def dump_json(dst_dir, board, thread):
-    """ Grab thread JSON from 4chan API """
+    """
+        Grab thread JSON from 4chan API
+
+        :param dst_dir: string, destination folder name (not path)
+        :param board: string, board name
+        :param thread: string, thread id
+    """
     
     json_filename = "%s.json" % thread
     json_path = os.path.join(dst_dir, json_filename)
@@ -216,7 +248,12 @@ def dump_json(dst_dir, board, thread):
 
 
 def list_external_links(curr_thread, dst_dir):
-    """ Get all external links quoted in comments """
+    """
+        Get all external links quoted in comments
+
+        :param curr_thread: py4chan Thread object
+        :param dst_dir: string, destination folder name (not path)
+    """
     
     # `The Ultimate URL Regex` <http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python>_
     linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
@@ -246,46 +283,74 @@ def list_external_links(curr_thread, dst_dir):
 
 
 
-def get_files(dst_dir, curr_thread, nothumbs, thumbsonly):
-    """ Download images, thumbs, and gather links to external urls """
+def get_images(curr_thread, dst_dir):
+    """
+        Download all images
 
+        :param curr_thread: py4chan Thread object
+        :param dst_dir: string, destination folder name (not path)
+    """
     # Create and set destination folders
     dst_images_dir = os.path.join(dst_dir, _IMAGE_DIR_NAME)
     make_sure_path_exists(dst_images_dir)
-    dst_thumbs_dir = os.path.join(dst_dir, _THUMB_DIR_NAME)
-    make_sure_path_exists(dst_thumbs_dir)
-    
+
     # regex for obtaining filenames from py4chan (new py4chan)
     fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
-    
+
     # regex for obtaining filenames from py4chan (legacy)
     #fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
-    #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
-    
-    if (thumbsonly == False):
-      # Dump all images within a thread from 4chan
-      for image_url in curr_thread.Files():
-        image_name = re.sub(fourchan_images_regex, '', image_url)
-        download_file(image_name, dst_images_dir, image_url)
 
-    if thumbsonly or (nothumbs == False):
-      # Dump all thumbnails within a thread from 4chan
-      for thumb_url in curr_thread.Thumbs():
-        thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
-        download_file(thumb_name, dst_thumbs_dir, thumb_url)
+    # Dump all images within a thread from 4chan
+    for image_url in curr_thread.Files():
+      image_name = re.sub(fourchan_images_regex, '', image_url)
+      download_file(image_name, dst_images_dir, image_url)
+
+def get_thumbs(curr_thread, dst_dir):
+    """
+        Download all thumbnails
+
+        :param curr_thread: py4chan Thread object
+        :param dst_dir: string, destination folder name (not path)
+    """
+    # Create and set destination folders
+    dst_thumbs_dir = os.path.join(dst_dir, _THUMB_DIR_NAME)
+    make_sure_path_exists(dst_thumbs_dir)
+
+    # regex for obtaining filenames from py4chan (new py4chan)
+    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+
+    # regex for obtaining filenames from py4chan (legacy)
+    #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
+
+    # Dump all thumbnails within a thread from 4chan
+    for thumb_url in curr_thread.Thumbs():
+      thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
+      download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
 
 
 def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
-    """ Dump the thread using the functions defined above """
-    
+    """
+        Dump the thread using the functions defined above
+
+        :param dst_dir: string, destination folder name (not path)
+        :param board: string, board name
+        :param thread: string, thread id
+        :param curr_thread: py4chan Thread object
+        :param nothumbs: bool, get thumbnails or not
+        :param thumbsonly: bool, only get thumbnails
+    """
     # Create paths if they don't exist
     make_sure_path_exists(dst_dir)
-    
-    # Download images and thumbs 
-    get_files(dst_dir, curr_thread, nothumbs, thumbsonly)
-    
+
+    # Choose whether to download images
+    if (thumbsonly == False):
+        get_images(curr_thread, dst_dir)
+
+    # Choose whether to download thumbnails
+    if (thumbsonly or (nothumbs == False):
+        get_thumbs(curr_thread, dst_dir)
+
     # Get all external links quoted in comments
     list_external_links(curr_thread, dst_dir)
 
@@ -298,7 +363,12 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
 
 
 def timestamp():
-    """ `Timestamp` <http://www.interfaceware.com/manual/timestamps_with_milliseconds.html>_ """
+    """
+        `Timestamp` 
+        <http://www.interfaceware.com/manual/timestamps_with_milliseconds.html>_
+
+        :returns: string, timestamp
+    """
     
     now = time.time()
     localtime = time.localtime(now)
@@ -309,7 +379,9 @@ def timestamp():
 """=== Main Function ==="""
 
 def main(args):
-    """ Check 4chan API for new content, and recursively dump thread """
+    """
+        Check 4chan API for new content, and recursively dump thread
+    """
     
     # Message to display upon completion
     _DUMP_COMPLETE_STRING = " :: Dump complete. To resume dumping the same thread,\nrun this script again."
@@ -397,7 +469,9 @@ def main(args):
 
 
 
-""" Use docopt to get arguments, and run main function """
+"""
+    Use docopt to get arguments, and run main function
+"""
 if __name__ == '__main__':
   args = docopt(doc, version=0.3)
   main(args)
