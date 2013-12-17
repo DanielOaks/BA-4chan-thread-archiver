@@ -22,10 +22,9 @@ import time
 import json
 import re
 import errno
-import requests0 as requests
+#import requests0 as requests
+import requests
 import py4chan
-
-
 
 """=== Docopt Arguments and Documentation ==="""
 
@@ -76,10 +75,11 @@ FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
     Commented here for compatibility purposes.
     http://chrishateswriting.com/post/68794699432/small-things-add-up
 """
-#FOURCHAN_API = 'api.4chan.org'
-#FOURCHAN_IMAGES = 'images.4chan.org'
-#FOURCHAN_THUMBS = 'thumbs.4chan.org'
-#FOURCHAN_STATIC = 'static.4chan.org'
+#FOURCHAN_CDN = '4chan.org'
+#FOURCHAN_API = 'api.' + FOURCHAN_CDN
+#FOURCHAN_IMAGES = 'images.' + FOURCHAN_CDN
+#FOURCHAN_THUMBS = 'thumbs.' + FOURCHAN_CDN
+#FOURCHAN_STATIC = 'static.' + FOURCHAN_CDN
 
 """
     Full HTTP Links to 4chan servers.
@@ -124,22 +124,21 @@ def download_file(fname, dst_folder, file_url):
         :param dst_folder: output folder string
         :param file_url: url to download from, string
     """
-    
     # Destination of downloaded file
     file_dst = os.path.join(dst_folder, fname)
     
     # If the file doesn't exist, download it
     if not os.path.exists(file_dst):
-      print('%s downloading...' % fname)
+      print(_TAG + '%s downloading...' % fname)
       i = requests.get(file_url)
       
       if i.status_code == 404:
-        print(' | Failed, try later (%s)' % file_url)
+        print(_TAG + 'Failed, try later (%s)' % file_url)
       else:
         open(file_dst, 'w').write(i.content)
         
     else:
-      print('%s already downloaded' % fname)
+      print(_TAG + '%s already downloaded' % fname)
 
 
 
@@ -206,7 +205,6 @@ def dump_html(dst_dir, board, thread):
         :param board: string, board name
         :param thread: string, thread id
     """
-    
     fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
     fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
     html_filename = "%s.html" % thread
@@ -238,7 +236,6 @@ def dump_json(dst_dir, board, thread):
         :param board: string, board name
         :param thread: string, thread id
     """
-    
     json_filename = "%s.json" % thread
     json_path = os.path.join(dst_dir, json_filename)
     
@@ -254,7 +251,6 @@ def list_external_links(curr_thread, dst_dir):
         :param curr_thread: py4chan Thread object
         :param dst_dir: string, destination folder name (not path)
     """
-    
     # `The Ultimate URL Regex` <http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python>_
     linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
 
@@ -274,7 +270,7 @@ def list_external_links(curr_thread, dst_dir):
         cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
         linklist = re.findall(linkregex, cleaned_com)
         for item in linklist:
-          print("Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
+          print(_TAG + "Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
           linklist_file.write(item[0])	# re.findall creates tuple
           linklist_file.write('\n')	# subdivide with newlines
 
@@ -323,13 +319,14 @@ def get_thumbs(curr_thread, dst_dir):
     #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
 
     # Dump all thumbnails within a thread from 4chan
+#    for thumb_url in curr_thread.thumbs():
     for thumb_url in curr_thread.Thumbs():
       thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
       download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
 
 
-def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
+def dump(dst_dir, board, thread, curr_thread, nothumbs = False, thumbsonly = False):
     """
         Dump the thread using the functions defined above
 
@@ -337,8 +334,8 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
         :param board: string, board name
         :param thread: string, thread id
         :param curr_thread: py4chan Thread object
-        :param nothumbs: bool, get thumbnails or not
-        :param thumbsonly: bool, only get thumbnails
+        :param nothumbs: bool, get thumbnails or not. Default value: False
+        :param thumbsonly: bool, only get thumbnails. Default value: False
     """
     # Create paths if they don't exist
     make_sure_path_exists(dst_dir)
@@ -348,7 +345,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly):
         get_images(curr_thread, dst_dir)
 
     # Choose whether to download thumbnails
-    if (thumbsonly or (nothumbs == False):
+    if (thumbsonly or (nothumbs == False)):
         get_thumbs(curr_thread, dst_dir)
 
     # Get all external links quoted in comments
@@ -386,6 +383,7 @@ def main(args):
     # Message to display upon completion
     _DUMP_COMPLETE_STRING = " :: Dump complete. To resume dumping the same thread,\nrun this script again."
     
+    # FIXME: needs to check if URL is valid so it can catch error correctly
     # Copy data from docopt arguments
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
@@ -407,6 +405,8 @@ def main(args):
     curr_board = py4chan.Board(board)
     
     # Check if the thread exists, then create py4chan thread object
+#    if (curr_board.thread_exists(int(thread))):
+#      curr_thread = curr_board.get_thread(int(thread))       # BA py-4chan 0.3
     if (curr_board.threadExists(int(thread))):
       curr_thread = curr_board.getThread(int(thread))
     else:
@@ -425,11 +425,11 @@ def main(args):
     # Using try/except loop to handle Ctrl-C
     try:
       # Switch to check for first run
-      firstIteration = True
+      first_iteration = True
       
       while 1:
         # don't run this code the first time
-        if (firstIteration == False):
+        if (first_iteration == False):
           
           # Wait to execute code again
           print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
@@ -443,13 +443,13 @@ def main(args):
             
           
           # Update thread and check if new replies have appeared
-          newReplies = curr_thread.update()
-          if (newReplies == 0):
+          new_replies = curr_thread.update()
+          if (new_replies == 0):
             print(_TAG + "%s - [No new posts.]" % timestamp())
             continue
           
           else:
-            print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), newReplies))
+            print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
             
           # If all tests are OK, dump thread again
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
@@ -459,7 +459,7 @@ def main(args):
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
           
           # first iteration is complete
-          firstIteration = False
+          first_iteration = False
           
     except KeyboardInterrupt:
       """ Stop try/except loop when [Ctrl-C] is pressed"""
