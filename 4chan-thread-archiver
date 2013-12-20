@@ -22,8 +22,8 @@ import time
 import json
 import re
 import errno
-#import requests0 as requests
-import requests
+import requests0 as requests
+#import requests            # need to fix the json dump requests bug in 1.x first
 import py4chan
 
 """=== Docopt Arguments and Documentation ==="""
@@ -314,7 +314,7 @@ def get_thumbs(curr_thread, dst_dir):
     make_sure_path_exists(dst_thumbs_dir)
 
     # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_thumbs_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
 
     # regex for obtaining filenames from py4chan (legacy)
     #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
