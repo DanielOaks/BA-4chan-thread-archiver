@@ -297,6 +297,7 @@ def get_images(curr_thread, dst_dir):
     #fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
 
     # Dump all images within a thread from 4chan
+#    for image_url in curr_thread.image_urls():
     for image_url in curr_thread.Files():
       image_name = re.sub(fourchan_images_regex, '', image_url)
       download_file(image_name, dst_images_dir, image_url)
@@ -313,13 +314,13 @@ def get_thumbs(curr_thread, dst_dir):
     make_sure_path_exists(dst_thumbs_dir)
 
     # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_thumbs_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
 
     # regex for obtaining filenames from py4chan (legacy)
     #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
 
     # Dump all thumbnails within a thread from 4chan
-#    for thumb_url in curr_thread.thumbs():
+#    for thumb_url in curr_thread.thumb_urls():
     for thumb_url in curr_thread.Thumbs():
       thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
       download_file(thumb_name, dst_thumbs_dir, thumb_url)
