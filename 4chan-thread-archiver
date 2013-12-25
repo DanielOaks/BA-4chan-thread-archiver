@@ -402,8 +402,8 @@ def main(args):
     dst_dir = os.path.join(path, board, thread)
 
 
-    # Initialize py4chan Board object
-    curr_board = py4chan.Board(board)
+    # Initialize py4chan Board object, enable https
+    curr_board = py4chan.Board(board, https=True)
     
     # Check if the thread exists, then create py4chan thread object
 #    if (curr_board.thread_exists(int(thread))):
