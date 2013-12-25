@@ -35,13 +35,14 @@ to download thread images and/or thumbnails, along with thread HTML, JSON,
 and a list of referenced external links.
 
 Usage:
-  4chan-thread-archiver <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly]
+  4chan-thread-archiver <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
   4chan-thread-archiver -h | --help
   4chan-thread-archiver -v | --version
 
 Options:
   --nothumbs          Don't download thumbnails
   --thumbsonly        Download thumbnails, no images
+  --enablessl         Download using HTTPS
   --delay=<int>       Delay between thread checks [default: 20]
   -h --help           Show help
   -v --version        Show version
@@ -53,10 +54,6 @@ Options:
 
 """ Important Message Front Tag """
 _TAG = " :: "
-
-""" HTTP header: use SSL by default """
-HTTP_HEADER = 'https://'
-#HTTP_HEADER = #'http://'
 
 """ 4chan top level domain names """
 FOURCHAN_BOARDS = 'boards.4chan.org'
@@ -100,13 +97,13 @@ FOURCHAN_CSS_REGEX = "/css/(\w+)\.\d+.css"
 #FOURCHAN_STATIC = 'static.' + FOURCHAN_CDN
 
 """
-    Full HTTP Links to 4chan servers.
+    Full Links to 4chan servers, without HTTP headers.
     Format is (boards, object_id)
 """
-FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + FOURCHAN_BOARDS_FOOTER
-FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + FOURCHAN_BOARDS_FOOTER + '.json'
-FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + FOURCHAN_IMAGES_FOOTER
-FOURCHAN_THUMBS_URL = HTTP_HEADER + FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
+FOURCHAN_BOARDS_URL = FOURCHAN_BOARDS + FOURCHAN_BOARDS_FOOTER
+FOURCHAN_API_URL = FOURCHAN_API + FOURCHAN_BOARDS_FOOTER + '.json'
+FOURCHAN_IMAGES_URL = FOURCHAN_IMAGES + FOURCHAN_IMAGES_FOOTER
+FOURCHAN_THUMBS_URL = FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
 
 """ default folder names for image and thumbnails """
 _DEFAULT_FOLDER = "4chan"
@@ -114,7 +111,7 @@ _IMAGE_DIR_NAME = "images"
 _THUMB_DIR_NAME = "thumbs"
 _CSS_DIR_NAME = "css"
 
-""" external link filename"""
+""" external link filename """
 EXT_LINKS_FILENAME = "external_links.txt"
 
 
@@ -192,24 +189,26 @@ def file_replace(fname, pat, s_after):
 
 
 
-def dump_css(dst_dir):
+def dump_css(dst_dir, https=True):
     """
         Dumps the CSS from 4cdn.
         (FIXME) Currently uses a static list of links, which works but is not ideal.
         Eventually, we need to create a JSON HTML Templater system.
 
         :param dst_dir: string, destination folder name (not path)
+        :param https: bool, download using https. Default value: False
     """
     fourchan_css_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX)
-    
+    http_header = ('http://' if not https else 'https://')
+
     # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
-    css_list = [HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluemobile.473.css",
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluenew.473.css", 
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubanew.473.css", 
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/futabanew.473.css", 
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/burichannew.473.css", 
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/photon.473.css",
-    HTTP_HEADER + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
+    css_list = [http_header + FOURCHAN_STATIC + "/css/yotsubluemobile.473.css",
+    http_header + FOURCHAN_STATIC + "/css/yotsubluenew.473.css", 
+    http_header + FOURCHAN_STATIC + "/css/yotsubanew.473.css", 
+    http_header + FOURCHAN_STATIC + "/css/futabanew.473.css", 
+    http_header + FOURCHAN_STATIC + "/css/burichannew.473.css", 
+    http_header + FOURCHAN_STATIC + "/css/photon.473.css",
+    http_header + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
     
     for css_url in css_list:
       css_name = re.sub(fourchan_css_url_regex, "\\1.css", css_url)
@@ -217,30 +216,33 @@ def dump_css(dst_dir):
 
 
 
-def dump_html(dst_dir, board, thread):
+def dump_html(dst_dir, board, thread, https=False):
     """
         Dumps thread in raw HTML format to `<thread-id>.html`
 
         :param dst_dir: string, destination folder name (not path)
         :param board: string, board name
         :param thread: string, thread id
+        :param https: bool, download using https. Default value: False
     """
+    http_header = ('http://' if not https else 'https://')
+
     fourchan_images_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
     fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
     html_filename = "%s.html" % thread
-    html_url = FOURCHAN_BOARDS_URL % (board, thread)
+    html_url = http_header + FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
     
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)
-    file_replace(html_path, '"//', '"' + 'http://')
+    file_replace(html_path, '"//', '"' + http_header)
     file_replace(html_path, fourchan_images_url_regex, _IMAGE_DIR_NAME + "/")
     file_replace(html_path, fourchan_thumbs_url_regex, _THUMB_DIR_NAME + "/")
     
     # Download a local copy of all CSS files
     dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
     make_sure_path_exists(dst_css_dir)
-    dump_css(dst_css_dir)
+    dump_css(dst_css_dir, https)
     
     # convert HTML links to use local CSS files that we just downloaded
     # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
@@ -248,18 +250,20 @@ def dump_html(dst_dir, board, thread):
 
 
 
-def dump_json(dst_dir, board, thread):
+def dump_json(dst_dir, board, thread, https=False):
     """
         Grab thread JSON from 4chan API
 
         :param dst_dir: string, destination folder name (not path)
         :param board: string, board name
         :param thread: string, thread id
+        :param https: bool, download using https. Default value: False
     """
     json_filename = "%s.json" % thread
     json_path = os.path.join(dst_dir, json_filename)
     
-    json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
+    http_header = ('http://' if not https else 'https://')
+    json_thread = requests.get(http_header + FOURCHAN_API_URL % (board, thread))
     json.dump(json_thread.json, open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 
 
@@ -347,7 +351,7 @@ def get_thumbs(curr_thread, dst_dir):
 
 
 
-def dump(dst_dir, board, thread, curr_thread, nothumbs = False, thumbsonly = False):
+def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, https=False):
     """
         Dump the thread using the functions defined above
 
@@ -357,6 +361,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs = False, thumbsonly = Fal
         :param curr_thread: py4chan Thread object
         :param nothumbs: bool, get thumbnails or not. Default value: False
         :param thumbsonly: bool, only get thumbnails. Default value: False
+        :param https: bool, download using https. Default value: False
     """
     # Create paths if they don't exist
     make_sure_path_exists(dst_dir)
@@ -373,10 +378,10 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs = False, thumbsonly = Fal
     list_external_links(curr_thread, dst_dir)
 
     # Dumps thread in raw HTML format to `<thread-id>.html`
-    dump_html(dst_dir, board, thread)
+    dump_html(dst_dir, board, thread, https)
     
     # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
-    dump_json(dst_dir, board, thread)
+    dump_json(dst_dir, board, thread, https)
 
 
 
@@ -411,6 +416,7 @@ def main(args):
     path   = args.get('--path')
     nothumbs = args.get('--nothumbs', False)
     thumbsonly = args.get('--thumbsonly', False)
+    enablessl = args.get('--enablessl', False)
     delay  = args.get('--delay')
 
 
@@ -423,7 +429,7 @@ def main(args):
 
 
     # Initialize py4chan Board object, enable https
-    curr_board = py4chan.Board(board, https=True)
+    curr_board = py4chan.Board(board, https=enablessl)
     
     # Check if the thread exists, then create py4chan thread object
 #    if (curr_board.thread_exists(int(thread))):
@@ -473,11 +479,11 @@ def main(args):
             print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
             
           # If all tests are OK, dump thread again
-          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
+          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
               
         else:
           # dump thread for the first time
-          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly)
+          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
           
           # first iteration is complete
           first_iteration = False
