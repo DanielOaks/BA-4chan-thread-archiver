@@ -71,6 +71,24 @@ FOURCHAN_THUMBS = 't.' + FOURCHAN_CDN
 FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
 
 """
+    Retrieval Footer Regex
+    Used for downloading content
+"""
+FOURCHAN_BOARDS_FOOTER = '/%s/res/%s'
+FOURCHAN_API_FOOTER = FOURCHAN_BOARDS_FOOTER + '.json'
+FOURCHAN_IMAGES_FOOTER = '/%s/src/%s'
+FOURCHAN_THUMBS_FOOTER = '/%s/thumb/%s'
+
+"""
+    HTML Parsing Regex
+    Used to parse and replace links in dumped HTML
+"""
+HTTP_HEADER_UNIV = "https?://"          # works for both http and https links
+FOURCHAN_IMAGES_REGEX = "/\w+/src/"
+FOURCHAN_THUMBS_REGEX = "/\w+/thumb/"
+FOURCHAN_CSS_REGEX = "/css/(\w+)\.\d+.css"
+
+"""
     Original 4chan cdn links, changed 20131202.
     Commented here for compatibility purposes.
     http://chrishateswriting.com/post/68794699432/small-things-add-up
@@ -85,10 +103,10 @@ FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
     Full HTTP Links to 4chan servers.
     Format is (boards, object_id)
 """
-FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + '/%s/res/%s'
-FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + '/%s/res/%s.json'
-FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + '/%s/src/%s'
-FOURCHAN_THUMBS_URL = HTTP_HEADER + FOURCHAN_THUMBS + '/%s/thumb/%s'
+FOURCHAN_BOARDS_URL = HTTP_HEADER + FOURCHAN_BOARDS + FOURCHAN_BOARDS_FOOTER
+FOURCHAN_API_URL = HTTP_HEADER + FOURCHAN_API + FOURCHAN_BOARDS_FOOTER + '.json'
+FOURCHAN_IMAGES_URL = HTTP_HEADER + FOURCHAN_IMAGES + FOURCHAN_IMAGES_FOOTER
+FOURCHAN_THUMBS_URL = HTTP_HEADER + FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
 
 """ default folder names for image and thumbnails """
 _DEFAULT_FOLDER = "4chan"
@@ -96,6 +114,8 @@ _IMAGE_DIR_NAME = "images"
 _THUMB_DIR_NAME = "thumbs"
 _CSS_DIR_NAME = "css"
 
+""" external link filename"""
+EXT_LINKS_FILENAME = "external_links.txt"
 
 
 """=== Functions ==="""
@@ -180,7 +200,7 @@ def dump_css(dst_dir):
 
         :param dst_dir: string, destination folder name (not path)
     """
-    fourchan_css_regex = re.compile("https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css")
+    fourchan_css_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX)
     
     # (FUTURE) Mod dump_css() to automatically scrape CSS links each time.
     css_list = [HTTP_HEADER + FOURCHAN_STATIC + "/css/yotsubluemobile.473.css",
@@ -192,7 +212,7 @@ def dump_css(dst_dir):
     HTTP_HEADER + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
     
     for css_url in css_list:
-      css_name = re.sub(fourchan_css_regex, "\\1.css", css_url)
+      css_name = re.sub(fourchan_css_url_regex, "\\1.css", css_url)
       download_file(css_name, dst_dir, css_url)
 
 
@@ -205,17 +225,17 @@ def dump_html(dst_dir, board, thread):
         :param board: string, board name
         :param thread: string, thread id
     """
-    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
-    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
+    fourchan_images_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
+    fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
     html_filename = "%s.html" % thread
     html_url = FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
     
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)
-    file_replace(html_path, '"//', '"http://')
-    file_replace(html_path, fourchan_images_regex, _IMAGE_DIR_NAME + "/")
-    file_replace(html_path, fourchan_thumbs_regex, _THUMB_DIR_NAME + "/")
+    file_replace(html_path, '"//', '"' + 'http://')
+    file_replace(html_path, fourchan_images_url_regex, _IMAGE_DIR_NAME + "/")
+    file_replace(html_path, fourchan_thumbs_url_regex, _THUMB_DIR_NAME + "/")
     
     # Download a local copy of all CSS files
     dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
@@ -224,7 +244,7 @@ def dump_html(dst_dir, board, thread):
     
     # convert HTML links to use local CSS files that we just downloaded
     # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
-    file_replace(html_path, "https?://" + FOURCHAN_STATIC + "/css/(\w+)\.\d+.css", "css/\\1.css")
+    file_replace(html_path, HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX, "css/\\1.css")
 
 
 
@@ -255,7 +275,7 @@ def list_external_links(curr_thread, dst_dir):
     linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
 
     # File to store list of all external links quoted in comments (overwrite upon each loop iteration)
-    linklist_dst = os.path.join(dst_dir, "external_links.txt")
+    linklist_dst = os.path.join(dst_dir, EXT_LINKS_FILENAME)
     linklist_file = open(linklist_dst, "w")
 
     for reply in curr_thread.replies:
@@ -291,15 +311,15 @@ def get_images(curr_thread, dst_dir):
     make_sure_path_exists(dst_images_dir)
 
     # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_images_regex = re.compile("https?://" + FOURCHAN_IMAGES + "/\w+/src/")
+    fourchan_images_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
 
     # regex for obtaining filenames from py4chan (legacy)
-    #fourchan_images_regex = re.compile("https?://images.4chan.org/\w+/src/")
+    #fourchan_images_url_regex = re.compile("https?://images.4chan.org/\w+/src/")
 
     # Dump all images within a thread from 4chan
 #    for image_url in curr_thread.image_urls():
     for image_url in curr_thread.Files():
-      image_name = re.sub(fourchan_images_regex, '', image_url)
+      image_name = re.sub(fourchan_images_url_regex, '', image_url)
       download_file(image_name, dst_images_dir, image_url)
 
 def get_thumbs(curr_thread, dst_dir):
@@ -314,15 +334,15 @@ def get_thumbs(curr_thread, dst_dir):
     make_sure_path_exists(dst_thumbs_dir)
 
     # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_thumbs_regex = re.compile("https?://\d+." + FOURCHAN_THUMBS + "/\w+/thumb/")
+    fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
 
     # regex for obtaining filenames from py4chan (legacy)
-    #fourchan_thumbs_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
+    #fourchan_thumbs_url_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
 
     # Dump all thumbnails within a thread from 4chan
 #    for thumb_url in curr_thread.thumb_urls():
     for thumb_url in curr_thread.Thumbs():
-      thumb_name = re.sub(fourchan_thumbs_regex, '', thumb_url)
+      thumb_name = re.sub(fourchan_thumbs_url_regex, '', thumb_url)
       download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
 
