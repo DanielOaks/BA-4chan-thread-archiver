@@ -418,7 +418,7 @@ def main(args):
     """
      
     # Stop the script if the given URL is malformed
-    if (check_url(args.get('<url>')) = ""):
+    if (check_url(args.get('<url>')) == ""):
       print(_TAG + "The URL is invalid, or it isn't a 4chan thread URL.")
       raise SystemExit(0)
 
