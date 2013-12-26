@@ -416,7 +416,6 @@ def main(args):
     """
         Check 4chan API for new content, and recursively dump thread
     """
-     
     # Stop the script if the given URL is malformed
     if (check_url(args.get('<url>')) == ""):
       print(_TAG + "The URL is invalid, or it isn't a 4chan thread URL.")
@@ -443,17 +442,22 @@ def main(args):
     # Initialize py4chan Board object, enable https
     curr_board = py4chan.Board(board, https=enablessl)
     
-    # Check if the thread exists, then create py4chan thread object
-#    if (curr_board.thread_exists(int(thread))):
-#      curr_thread = curr_board.get_thread(int(thread))       # BA py-4chan 0.3
-    if (curr_board.threadExists(int(thread))):
-      curr_thread = curr_board.getThread(int(thread))
-    else:
-      # Stop the script if the thread is not found
-      print(_TAG + "Thread %s not found." % thread)
-      print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
-      raise SystemExit(0)
 
+    try:
+      # Check if the thread exists, then create py4chan thread object
+      if (curr_board.threadExists(int(thread))):
+        curr_thread = curr_board.getThread(int(thread))
+#      if (curr_board.thread_exists(int(thread))):
+#        curr_thread = curr_board.get_thread(int(thread))       # BA py-4chan 0.3
+      else:
+        # Stop the script if the thread is not found
+        print(_TAG + "Thread %s not found." % thread)
+        print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
+        raise SystemExit(0)
+    # FIXME: Handles the error of no internet connection, but better to except requests.exceptions.ConnectionError:
+    except:
+        print(_TAG + "Unable to connect to the internet.")
+        raise SystemExit(0)
 
     # header
     print(_TAG + 'Board : 4chan /%s/' % board)
