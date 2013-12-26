@@ -385,6 +385,17 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
 
 
 
+def check_url(url):
+  """
+      Make sure that the given URL is a valid 4chan thread URL.
+      Originates from The Chandler by Dhole
+  """
+  url_parsed = re.findall("http(?:s)?://(?:boards.)?.*/*/res/[0-9]*(?:.php|.html)?", url)
+  if len(url_parsed) < 1:
+    return ""
+  else:
+    return url_parsed[0]
+
 def timestamp():
     """
         `Timestamp` 
@@ -405,11 +416,12 @@ def main(args):
     """
         Check 4chan API for new content, and recursively dump thread
     """
-    
-    # Message to display upon completion
-    _DUMP_COMPLETE_STRING = " :: Dump complete. To resume dumping the same thread,\nrun this script again."
-    
-    # FIXME: needs to check if URL is valid so it can catch error correctly
+     
+    # Stop the script if the given URL is malformed
+    if (check_url(args.get('<url>')) = ""):
+      print(_TAG + "The URL is invalid, or it isn't a 4chan thread URL.")
+      raise SystemExit(0)
+
     # Copy data from docopt arguments
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
