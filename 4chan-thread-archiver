@@ -80,10 +80,10 @@ FOURCHAN_THUMBS_FOOTER = '/%s/thumb/%s'
     HTML Parsing Regex
     Used to parse and replace links in dumped HTML
 """
-HTTP_HEADER_UNIV = "https?://"          # works for both http and https links
-FOURCHAN_IMAGES_REGEX = "/\w+/src/"
-FOURCHAN_THUMBS_REGEX = "/\w+/thumb/"
-FOURCHAN_CSS_REGEX = "/css/(\w+)\.\d+.css"
+HTTP_HEADER_UNIV = r"https?://"          # works for both http and https links
+FOURCHAN_IMAGES_REGEX = r"/\w+/src/"
+FOURCHAN_THUMBS_REGEX = r"/\w+/thumb/"
+FOURCHAN_CSS_REGEX = r"/css/(\w+)\.\d+.css"
 
 """
     Original 4chan cdn links, changed 20131202.
@@ -185,6 +185,8 @@ def file_replace(fname, pat, s_after):
         
       out.close()
       # FIXME Works on Linux only. Has a rename error in Windows
+      print("Saving modified file to %s" % fname)
+      os.remove(fname)            # delete original file
       os.rename(out_fname, fname)
 
 
@@ -443,14 +445,13 @@ def main(args):
     curr_board = py4chan.Board(board, https=enablessl)
     
 
+    # Check if the thread exists, then create py4chan thread object. Stop if not found
     try:
-      # Check if the thread exists, then create py4chan thread object
       if (curr_board.threadExists(int(thread))):
         curr_thread = curr_board.getThread(int(thread))
 #      if (curr_board.thread_exists(int(thread))):
 #        curr_thread = curr_board.get_thread(int(thread))       # BA py-4chan 0.3
       else:
-        # Stop the script if the thread is not found
         print(_TAG + "Thread %s not found." % thread)
         print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
         raise SystemExit(0)
