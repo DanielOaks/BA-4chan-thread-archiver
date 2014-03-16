@@ -125,7 +125,7 @@ def make_sure_path_exists(path):
     """
     try:
       os.makedirs(path)
-      
+
     except OSError as exception:
       if exception.errno != errno.EEXIST:
         raise
@@ -142,17 +142,17 @@ def download_file(fname, dst_folder, file_url):
     """
     # Destination of downloaded file
     file_dst = os.path.join(dst_folder, fname)
-    
+
     # If the file doesn't exist, download it
     if not os.path.exists(file_dst):
       print(_TAG + '%s downloading...' % fname)
       i = requests.get(file_url)
-      
+
       if i.status_code == 404:
         print(_TAG + 'Failed, try later (%s)' % file_url)
       else:
         open(file_dst, 'w').write(i.content)
-        
+
     else:
       print(_TAG + '%s already downloaded' % fname)
 
@@ -178,10 +178,10 @@ def file_replace(fname, pat, s_after):
     with open(fname) as f:
       out_fname = fname + ".tmp"
       out = open(out_fname, "w")
-      
+
       for line in f:
         out.write(re.sub(pat, s_after, line))
-        
+
       out.close()
       # FIXME Works on Linux only. Has a rename error in Windows
       print("Saving modified file to %s" % fname)
@@ -210,7 +210,7 @@ def dump_css(dst_dir, https=True):
     http_header + FOURCHAN_STATIC + "/css/burichannew.473.css", 
     http_header + FOURCHAN_STATIC + "/css/photon.473.css",
     http_header + FOURCHAN_STATIC + "/css/tomorrow.473.css"]
-    
+
     for css_url in css_list:
       css_name = re.sub(fourchan_css_url_regex, r"\1.css", css_url)
       download_file(css_name, dst_dir, css_url)
@@ -233,18 +233,18 @@ def dump_html(dst_dir, board, thread, https=False):
     html_filename = "%s.html" % thread
     html_url = http_header + FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url)
-    
+
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)
     file_replace(html_path, '"//', '"' + http_header)
     file_replace(html_path, fourchan_images_url_regex, _IMAGE_DIR_NAME + "/")
     file_replace(html_path, fourchan_thumbs_url_regex, _THUMB_DIR_NAME + "/")
-    
+
     # Download a local copy of all CSS files
     dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
     make_sure_path_exists(dst_css_dir)
     dump_css(dst_css_dir, https)
-    
+
     # convert HTML links to use local CSS files that we just downloaded
     # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
     file_replace(html_path, HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX, _CSS_DIR_NAME + r"/\1.css")
@@ -264,7 +264,7 @@ def dump_json(dst_dir, board, thread, https=False):
     json_path = os.path.join(dst_dir, json_filename)
     http_header = ('http://' if not https else 'https://')
     json_url = http_header + FOURCHAN_API_URL % (board, thread)
-    
+
     json_thread = requests.get(http_header + FOURCHAN_API_URL % (board, thread))
     json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 
@@ -287,10 +287,10 @@ def list_external_links(curr_thread, dst_dir):
     for reply in curr_thread.replies:
       if (reply.Comment == None):
         continue
-      
+
       if not linkregex.search(reply.Comment):
         continue
-      
+
       else:
         # We need to get rid of all <wbr> tags before parsing
         cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
@@ -381,7 +381,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
 
     # Dumps thread in raw HTML format to `<thread-id>.html`
     dump_html(dst_dir, board, thread, https)
-    
+
     # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
     dump_json(dst_dir, board, thread, https)
 
@@ -405,7 +405,7 @@ def timestamp():
 
         :returns: string, timestamp
     """
-    
+
     now = time.time()
     localtime = time.localtime(now)
     return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
@@ -436,14 +436,14 @@ def main(args):
     # Set a default path if none is given
     if (path == None):
       path = os.path.join(os.getcwd() + os.path.sep + _DEFAULT_FOLDER)
-      
+
     # Set destination directory
     dst_dir = os.path.join(path, board, thread)
 
 
     # Initialize py4chan Board object, enable https
     curr_board = py4chan.Board(board, https=enablessl)
-    
+
 
     # Check if the thread exists, then create py4chan thread object. Stop if not found
     try:
@@ -470,41 +470,41 @@ def main(args):
     try:
       # Switch to check for first run
       first_iteration = True
-      
+
       while 1:
         # don't run this code the first time
         if (first_iteration == False):
-          
+
           # Wait to execute code again
           print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
           time.sleep(int(delay))
-          
+
           if curr_thread.is_404:
             # Stop when thread gets 404'ed
             print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
             print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
             raise SystemExit(0)
-            
-          
+
+
           # Update thread and check if new replies have appeared
           new_replies = curr_thread.update()
           if (new_replies == 0):
             print(_TAG + "%s - [No new posts.]" % timestamp())
             continue
-          
+
           else:
             print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
-            
+
           # If all tests are OK, dump thread again
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-              
+
         else:
           # dump thread for the first time
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-          
+
           # first iteration is complete
           first_iteration = False
-          
+
     except KeyboardInterrupt:
       """ Stop try/except loop when [Ctrl-C] is pressed"""
       print("\n")
