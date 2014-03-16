@@ -22,7 +22,7 @@ import time
 import json
 import re
 import errno
-import requests0 as requests
+import requests
 
 from docopt import docopt
 
@@ -199,7 +199,7 @@ def dump_json(dst_dir, board, thread):
     json_path = os.path.join(dst_dir, json_filename)
     
     json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
-    json.dump(json_thread.json, open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
+    json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 	  
 # Get all external links quoted in comments
 def list_external_links(json_thread, dst_dir):
