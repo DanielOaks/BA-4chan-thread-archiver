@@ -22,7 +22,7 @@ import time
 import json
 import re
 import errno
-import requests0 as requests
+import requests
 import py4chan
 
 
@@ -209,9 +209,10 @@ def dump_json(dst_dir, board, thread):
     
     json_filename = "%s.json" % thread
     json_path = os.path.join(dst_dir, json_filename)
+    json_url = FOURCHAN_API_URL % (board, thread)
     
-    json_thread = requests.get(FOURCHAN_API_URL % (board, thread))
-    json.dump(json_thread.json, open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
+    json_thread = requests.get(json_url)
+    json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 
 
 
