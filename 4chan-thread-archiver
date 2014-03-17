@@ -134,7 +134,7 @@ def make_sure_path_exists(path):
 
 def download_file(fname, dst_folder, file_url):
     """
-        (FIXME) Download any file using requests0. Needs update
+        Download any file using requests, in chunks.
 
         :param fname: filename string
         :param dst_folder: output folder string
