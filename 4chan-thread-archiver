@@ -151,7 +151,10 @@ def download_file(fname, dst_folder, file_url):
       if i.status_code == 404:
         print(_TAG + 'Failed, try later (%s)' % file_url)
       else:
-        open(file_dst, 'w').write(i.content)
+        # download file in chunks of 1KB
+        with open(file_dst, 'wb') as fd:
+          for chunk in i.iter_content(chunk_size=1024):
+            fd.write(chunk)
 
     else:
       print(_TAG + '%s already downloaded' % fname)
