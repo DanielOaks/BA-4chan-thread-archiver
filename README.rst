@@ -53,7 +53,7 @@ Windows
 
 > **Note:** This script is now fixed for Windows and Python 3.x. PyQt GUI coming soon.
 
-1. Install [ActivePython](http://www.activestate.com/activepython/downloads),  Either version 2.x and 3.x will work.
+1. Install `ActivePython <http://www.activestate.com/activepython/downloads>`_,  Either version 2.x and 3.x will work.
 2. After installation, go to the Start Menu and under the **ActiveState ActivePython** programs folder, click **Python Package Manager (PyPM)**.
 3. A command prompt will appear. Type in the command below and press enter:
 
