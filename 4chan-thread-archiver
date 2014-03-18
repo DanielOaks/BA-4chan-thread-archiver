@@ -134,19 +134,20 @@ def make_sure_path_exists(path):
 
 
 
-def download_file(fname, dst_folder, file_url):
+def download_file(fname, dst_folder, file_url, overwrite=False):
     """
         Download any file using requests, in chunks.
 
         :param fname: filename string
         :param dst_folder: output folder string
         :param file_url: url to download from, string
+        :param overwrite: Overwrite any existing files, bool
     """
     # Destination of downloaded file
     file_dst = os.path.join(dst_folder, fname)
 
     # If the file doesn't exist, download it
-    if not os.path.exists(file_dst):
+    if ( not os.path.exists(file_dst) ) or overwrite:
       print(_TAG + '%s downloading...' % fname)
       i = requests.get(file_url)
 
@@ -220,7 +221,7 @@ def dump_html(dst_dir, board, thread, https=False):
     fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
     html_filename = "%s.html" % thread
     html_url = http_header + FOURCHAN_BOARDS_URL % (board, thread)
-    download_file(html_filename, dst_dir, html_url)
+    download_file(html_filename, dst_dir, html_url, overwrite=True)
 
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)

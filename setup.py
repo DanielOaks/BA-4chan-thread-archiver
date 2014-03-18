@@ -19,7 +19,7 @@ with open('README.rst') as file:
 
 setup(
 		name             = 'BA-4chan-thread-archiver',
-		version          = '0.6.6',
+		version          = '0.6.7',
 		description      = 'Makes a complete archive of a 4chan thread\'s images, HTML, and JSON, using the 4chan API.',
 		long_description = long_description, 
 		license          = open('LICENSE').read(),
