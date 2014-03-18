@@ -13,9 +13,9 @@ This script uses the `4chan API <https://github.com/4chan/4chan-API>`_ to:
 * Keep downloading until 404 (with a user-set delay)
 * Can be restarted at any time
 
-This script is designed to replace "Right-click Save As, Web Page Complete" when saving 4chan threads, since it does not save full-sized images or JSON. 
+This script is designed to replace the typical "Right-click Save As, Web Page Complete" action, since that does not save full-sized images or JSON. 
 
-It can also be used as a far lighter, static HTML alternative to Fuuka.
+This can also be used as a guerilla, static HTML alternative to Fuuka.
 
 Part of the JSON-based-chanarchiver by Lawrence Wu, built 2013/04/04.
 
