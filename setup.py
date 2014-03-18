@@ -13,11 +13,15 @@ if sys.argv[-1] == 'publish':
 	os.system('python setup.py sdist upload')
 	sys.exit()
 
+with open('README.rst') as file:
+  long_description = file.read()
+
+
 setup(
 		name             = 'BA-4chan-thread-archiver',
 		version          = '0.6.4',
-		description      = '4chan API-based complete thread archiver',
-		long_description = open('README.rst').read(), 
+		description      = 'Makes a complete archive of a 4chan thread\'s images, HTML, and JSON, using the 4chan API.',
+		long_description = long_description, 
 		license          = open('LICENSE').read(),
 		author           = 'Lawrence Wu',
 		author_email     = 'sagnessagiel@gmail.com',

@@ -1,5 +1,5 @@
 BA 4chan API Thread Archiver
-===============
+=============================
 
 `Github <https://github.com/bibanon/BA-4chan-thread-archiver>`_
 
@@ -68,11 +68,11 @@ Windows
     cd C:\Python33\Scripts
 
 5. Now we can use the script. Replace the URL in the example below with the one you want to save, and replace the path (keep the quotations) with the folder you want to save to.
-	
+        
 ::
 
-	python 4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path="C:\Users\Danny\4chan-threads"
-	
+        python 4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path="C:\Users\Danny\4chan-threads"
+        
 Linux/Mac
 ---------
 
@@ -91,7 +91,7 @@ Linux/Mac
     4chan-thread-archiver http://boards.4chan.org/b/res/423861837
 
 Modifications to original
-============
+==========================
 
 Originally forked from Socketub's `4chan-thread-archiver. <https://github.com/socketubs/4chan-thread-archiver>`_ 
 
