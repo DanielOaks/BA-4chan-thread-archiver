@@ -18,10 +18,12 @@
 #
 
 import os
+import fileinput
 import time
 import json
 import re
 import errno
+
 import requests
 import py4chan
 
@@ -163,34 +165,17 @@ def download_file(fname, dst_folder, file_url):
 
 def file_replace(fname, pat, s_after):
     """
-        File in place regex function
-        originally scripted by steveha on StackOverflow
-        http://stackoverflow.com/questions/1597649/replace-strings-in-files-by-python
+        File in place regex function, using fileinput
         Notice: all parameters are recommended to be in r"raw strings"
 
         :param fname: filename string
         :param pat: regex pattern to search for, as a string
         :param s_after: what to replace pattern in file with, string
     """
-    # first, see if the pattern is even in the file.
-    with open(fname) as f:
-      if not any(re.search(pat, line) for line in f):
-        return # pattern does not occur in file so we are done.
-
-    # pattern is in the file, so perform replace operation.
-    with open(fname) as f:
-      out_fname = fname + ".tmp"
-      out = open(out_fname, "w")
-
-      for line in f:
-        out.write(re.sub(pat, s_after, line))
-
-      out.close()
-      # FIXME Works on Linux only. Has a rename error in Windows
-      print("Saving modified file to %s" % fname)
-      os.remove(fname)            # delete original file
-      os.rename(out_fname, fname)
-
+	
+    for line in fileinput.input(fname, inplace=True):
+      print(re.sub(pat, s_after, line))
+	
 
 
 def dump_css(dst_dir, https=True):

@@ -38,38 +38,57 @@ Usage
 
 By default, the script saves to the folder ``4chan`` in the current working directory.
 
-Installation
-============
-
-Linux/Mac
----------
-
-Install Python on your computer. On Linux, Python is almost always preinstalled; however, you will also have to install the program ``pip`` from the repositories to install the necessary packages.
-
-::
-
-    easy_install pip
-    pip install BA-4chan-thread-archiver
-
-Windows
--------
-
-> **Note:** Unfortunately, this script just flat out fails to run in Windows. We need some help figuring out why...
-
-1. Install `Python 2.7.` <http://python.org/download/>_ 32-bit version is recommended
-2. Install `pip1.6` <https://sites.google.com/site/pydatalog/python/pip-for-windows> using the linked easy installer.
-3. Follow the instructions on that site to install the package `BA-4chan-thread-archiver`
-
-::
-
-    pip install BA-4chan-thread-archiver
-    
 Example
 =======
 
 ::
 
     4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path=4chan-threads --delay 5 --thumbsonly
+
+Installation
+============
+
+Windows
+-------
+
+> **Note:** This script is now fixed for Windows and Python 3.x. PyQt GUI coming soon.
+
+1. Install [ActivePython](http://www.activestate.com/activepython/downloads),  Either version 2.x and 3.x will work.
+2. After installation, go to the Start Menu and under the **ActiveState ActivePython** programs folder, click **Python Package Manager (PyPM)**.
+3. A command prompt will appear. Type in the command below and press enter:
+
+::
+
+    pip install BA-4chan-thread-archiver
+    
+4. Open up a command prompt and navigate to the folder where the python scripts are stored. (In this example we assume it is **Python33**. Check the root of your C drive if it isn't)
+
+::
+
+    cd C:\Python33\Scripts
+
+5. Now we can use the script. Replace the URL in the example below with the one you want to save, and replace the path (keep the quotations) with the folder you want to save to.
+	
+::
+
+	python 4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path="C:\Users\Danny\4chan-threads"
+	
+Linux/Mac
+---------
+
+1. Install Python on your computer. On Linux, Python is almost always preinstalled.
+2. We also need to install the Pip package manager, to download all the dependencies.
+
+::
+
+    easy_install pip
+    pip install BA-4chan-thread-archiver
+
+3. Navigate your terminal to the folder you wish to save the threads into, and run the command below to download an entire thread. (you may also manually specify a path, using the **--path=** argument)
+
+::
+
+    4chan-thread-archiver http://boards.4chan.org/b/res/423861837
 
 Modifications to original
 ============

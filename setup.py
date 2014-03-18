@@ -15,7 +15,7 @@ if sys.argv[-1] == 'publish':
 
 setup(
 		name             = 'BA-4chan-thread-archiver',
-		version          = '0.6.3',
+		version          = '0.6.4',
 		description      = '4chan API-based complete thread archiver',
 		long_description = open('README.rst').read(), 
 		license          = open('LICENSE').read(),
