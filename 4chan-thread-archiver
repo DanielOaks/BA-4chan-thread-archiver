@@ -52,17 +52,15 @@ Options:
 
 
 
-"""=== Constant Variables and Domain Names to Use ==="""
-
-""" Important Message Front Tag """
-_TAG = " :: "
+"""=== 4chan URL Settings ==="""
 
 """ 4chan top level domain names """
 FOURCHAN_BOARDS = 'boards.4chan.org'
 FOURCHAN_CDN = '4cdn.org'
 
 """
-    4chan Content Delivery Network domain names (for images, thumbs, api)
+    4chan Content Delivery Network domain names
+    (for images, thumbs, api)
 """
 FOURCHAN_API = 'a.' + FOURCHAN_CDN
 FOURCHAN_IMAGES = 'i.' + FOURCHAN_CDN
@@ -71,7 +69,7 @@ FOURCHAN_STATIC = 's.' + FOURCHAN_CDN
 
 """
     Retrieval Footer Regex
-    Used for downloading content
+    Format is (boards, object_id)
 """
 FOURCHAN_BOARDS_FOOTER = '/%s/res/%s'
 FOURCHAN_API_FOOTER = FOURCHAN_BOARDS_FOOTER + '.json'
@@ -79,8 +77,17 @@ FOURCHAN_IMAGES_FOOTER = '/%s/src/%s'
 FOURCHAN_THUMBS_FOOTER = '/%s/thumb/%s'
 
 """
+    Full HTTP Links to 4chan servers, without HTTP headers
+    Used for creating download links.
+"""
+FOURCHAN_BOARDS_URL = FOURCHAN_BOARDS + FOURCHAN_BOARDS_FOOTER
+FOURCHAN_API_URL = FOURCHAN_API + FOURCHAN_API_FOOTER
+FOURCHAN_IMAGES_URL = FOURCHAN_IMAGES + FOURCHAN_IMAGES_FOOTER
+FOURCHAN_THUMBS_URL = FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
+
+"""
     HTML Parsing Regex
-    Used to parse and replace links in dumped HTML
+    Matches links in dumped HTML.
 """
 HTTP_HEADER_UNIV = r"https?://"          # works for both http and https links
 FOURCHAN_IMAGES_REGEX = r"/\w+/src/"
@@ -88,24 +95,14 @@ FOURCHAN_THUMBS_REGEX = r"/\w+/thumb/"
 FOURCHAN_CSS_REGEX = r"/css/(\w+)\.\d+.css"
 
 """
-    Original 4chan cdn links, changed 20131202.
-    Commented here for compatibility purposes.
-    http://chrishateswriting.com/post/68794699432/small-things-add-up
+    Regex Links to 4chan servers, without HTTP headers
+    Used to match and replace links in dumped HTML.
 """
-#FOURCHAN_CDN = '4chan.org'
-#FOURCHAN_API = 'api.' + FOURCHAN_CDN
-#FOURCHAN_IMAGES = 'images.' + FOURCHAN_CDN
-#FOURCHAN_THUMBS = 'thumbs.' + FOURCHAN_CDN
-#FOURCHAN_STATIC = 'static.' + FOURCHAN_CDN
 
-"""
-    Full Links to 4chan servers, without HTTP headers.
-    Format is (boards, object_id)
-"""
-FOURCHAN_BOARDS_URL = FOURCHAN_BOARDS + FOURCHAN_BOARDS_FOOTER
-FOURCHAN_API_URL = FOURCHAN_API + FOURCHAN_BOARDS_FOOTER + '.json'
-FOURCHAN_IMAGES_URL = FOURCHAN_IMAGES + FOURCHAN_IMAGES_FOOTER
-FOURCHAN_THUMBS_URL = FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
+FOURCHAN_IMAGES_URL_REGEX = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
+FOURCHAN_THUMBS_URL_REGEX = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
+
+"""=== Folder Structure Settings ==="""
 
 """ default folder names for image and thumbnails """
 _DEFAULT_FOLDER = "4chan"
@@ -116,8 +113,11 @@ _CSS_DIR_NAME = "css"
 """ external link filename """
 EXT_LINKS_FILENAME = "external_links.txt"
 
+""" Important Message Front Tag """
+_TAG = " :: "
 
-"""=== Functions ==="""
+
+"""=== Utilities ==="""
 
 def make_sure_path_exists(path):
     """
@@ -174,11 +174,13 @@ def file_replace(fname, pat, s_after):
         :param pat: regex pattern to search for, as a string
         :param s_after: what to replace pattern in file with, string
     """
-	
+
     for line in fileinput.input(fname, inplace=True):
       print(re.sub(pat, s_after, line))
-	
 
+
+
+"""=== Dump Functions ==="""
 
 def dump_css(dst_dir, https=True):
     """
@@ -216,19 +218,16 @@ def dump_html(dst_dir, board, thread, https=False):
         :param thread: string, thread id
         :param https: bool, download using https. Default value: False
     """
-    http_header = ('http://' if not https else 'https://')
-
-    fourchan_images_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
-    fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
     html_filename = "%s.html" % thread
+    http_header = ('http://' if not https else 'https://')
     html_url = http_header + FOURCHAN_BOARDS_URL % (board, thread)
     download_file(html_filename, dst_dir, html_url, overwrite=True)
 
     # Convert all links in HTML dump to use locally downloaded files
     html_path = os.path.join(dst_dir, html_filename)
     file_replace(html_path, '"//', '"' + http_header)
-    file_replace(html_path, fourchan_images_url_regex, _IMAGE_DIR_NAME + "/")
-    file_replace(html_path, fourchan_thumbs_url_regex, _THUMB_DIR_NAME + "/")
+    file_replace(html_path, FOURCHAN_IMAGES_URL_REGEX, _IMAGE_DIR_NAME + "/")
+    file_replace(html_path, FOURCHAN_THUMBS_URL_REGEX, _THUMB_DIR_NAME + "/")
 
     # Download a local copy of all CSS files
     dst_css_dir = os.path.join(dst_dir, _CSS_DIR_NAME)
@@ -306,16 +305,10 @@ def get_images(curr_thread, dst_dir):
     dst_images_dir = os.path.join(dst_dir, _IMAGE_DIR_NAME)
     make_sure_path_exists(dst_images_dir)
 
-    # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_images_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_IMAGES + FOURCHAN_IMAGES_REGEX)
-
-    # regex for obtaining filenames from py4chan (legacy)
-    #fourchan_images_url_regex = re.compile("https?://images.4chan.org/\w+/src/")
-
     # Dump all images within a thread from 4chan
 #    for image_url in curr_thread.image_urls():
     for image_url in curr_thread.Files():
-      image_name = re.sub(fourchan_images_url_regex, '', image_url)
+      image_name = re.sub(FOURCHAN_IMAGES_URL_REGEX, '', image_url)
       download_file(image_name, dst_images_dir, image_url)
 
 def get_thumbs(curr_thread, dst_dir):
@@ -329,16 +322,10 @@ def get_thumbs(curr_thread, dst_dir):
     dst_thumbs_dir = os.path.join(dst_dir, _THUMB_DIR_NAME)
     make_sure_path_exists(dst_thumbs_dir)
 
-    # regex for obtaining filenames from py4chan (new py4chan)
-    fourchan_thumbs_url_regex = re.compile(HTTP_HEADER_UNIV + "\d+." + FOURCHAN_THUMBS + FOURCHAN_THUMBS_REGEX)
-
-    # regex for obtaining filenames from py4chan (legacy)
-    #fourchan_thumbs_url_regex = re.compile("https?://\d+.thumbs.4chan.org/\w+/thumb/")
-
     # Dump all thumbnails within a thread from 4chan
 #    for thumb_url in curr_thread.thumb_urls():
     for thumb_url in curr_thread.Thumbs():
-      thumb_name = re.sub(fourchan_thumbs_url_regex, '', thumb_url)
+      thumb_name = re.sub(FOURCHAN_THUMBS_URL_REGEX, '', thumb_url)
       download_file(thumb_name, dst_thumbs_dir, thumb_url)
 
 
@@ -377,16 +364,18 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
 
 
 
+"""=== Main Function ==="""
+
 def check_url(url):
-  """
-      Make sure that the given URL is a valid 4chan thread URL.
-      Originates from The Chandler by Dhole
-  """
-  url_parsed = re.findall("http(?:s)?://(?:boards.)?.*/*/res/[0-9]*(?:.php|.html)?", url)
-  if len(url_parsed) < 1:
-    return ""
-  else:
-    return url_parsed[0]
+    """
+        Make sure that the given URL is a valid 4chan thread URL.
+        Originates from The Chandler by Dhole
+    """
+    url_parsed = re.findall("http(?:s)?://(?:boards.)?.*/*/res/[0-9]*(?:.php|.html)?", url)
+    if len(url_parsed) < 1:
+      return ""
+    else:
+      return url_parsed[0]
 
 def timestamp():
     """
@@ -401,8 +390,6 @@ def timestamp():
     return time.strftime('%Y-%m-%d %H:%M:%S', localtime)
 
 
-
-"""=== Main Function ==="""
 
 def main(args):
     """
