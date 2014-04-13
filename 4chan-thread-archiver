@@ -17,12 +17,12 @@
 # 09-08-12
 #
 
-import os
-import fileinput
-import time
-import json
-import re
 import errno
+import fileinput
+import json
+import time
+import re
+import os
 
 import requests
 import py4chan
