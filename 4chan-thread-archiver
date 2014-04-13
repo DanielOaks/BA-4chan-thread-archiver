@@ -246,37 +246,35 @@ def dump_html(dst_dir, board, thread, https=False):
 
 
 
-def dump_json(dst_dir, board, thread, https=False):
+def dump_json(json_url, fname, dst_dir):
     """
-        Grab thread JSON from 4chan API
+        Download JSON to local file, pretty printed
 
+        :param json_url: string, URL to download from
+        :param fname: string, destination filename, no extension
         :param dst_dir: string, destination folder name (not path)
-        :param board: string, board name
-        :param thread: string, thread id
         :param https: bool, download using https. Default value: False
     """
-    json_filename = "%s.json" % thread
+    json_filename = "%s.json" % fname
     json_path = os.path.join(dst_dir, json_filename)
-    http_header = ('http://' if not https else 'https://')
-    json_url = http_header + FOURCHAN_API_URL % (board, thread)
 
     json_thread = requests.get(json_url)
     json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 
 
 
-def find_in_all_posts(curr_thread, regex, dst_dir):
+def find_in_all_posts(curr_thread, regex, fname, dst_dir):
     """
         Find a regex pattern in all comments and record them in a file
 
         :param dst_dir: string, destination folder name (not path)
         :param regex: re.compile() object pattern to look for
-        # variables from initialized object
+        :param fname: filename to write to
         :param curr_thread: py4chan Thread object
     """
 
     # File to store list of all external links quoted in comments (overwrite upon each loop iteration)
-    listing_dst = os.path.join(dst_dir, EXT_LINKS_FILENAME)
+    listing_dst = os.path.join(dst_dir, fname)
     listing_file = open(listing_dst, "w")
 
     for reply in curr_thread.replies:
@@ -360,13 +358,15 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
         get_thumbs(curr_thread, dst_dir)
 
     # Get all external links quoted in comments
-    find_in_all_posts(curr_thread, URLREGEX, dst_dir)
+    find_in_all_posts(curr_thread, URLREGEX, EXT_LINKS_FILENAME, dst_dir)
 
     # Dumps thread in raw HTML format to `<thread-id>.html`
     dump_html(dst_dir, board, thread, https)
 
     # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
-    dump_json(dst_dir, board, thread, https)
+    http_header = ('http://' if not https else 'https://')
+    json_url = http_header + FOURCHAN_API_URL % (board, thread)
+    dump_json(json_url, thread, dst_dir)
 
 
 
