@@ -177,7 +177,7 @@ def download_json(json_url, fname, dst_dir):
 
         :param json_url: string, URL to download from
         :param fname: string, destination filename, no extension
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
     """
     json_filename = "%s.json" % fname
     json_path = os.path.join(dst_dir, json_filename)
@@ -209,7 +209,7 @@ def dump_json(dst_dir, board, thread, https=False):
     """
         Dump 4chan JSON to local file, pretty printed
 
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
         :param board: string, board name
         :param thread: string, thread id
         :param https: bool, download using https. Default value: False
@@ -224,7 +224,7 @@ def dump_css(dst_dir, https=True):
         (FIXME) Currently uses a static list of links, which works but is not ideal.
         Eventually, we need to create a JSON HTML Templater system.
 
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
         :param https: bool, download using https. Default value: False
     """
     fourchan_css_url_regex = re.compile(HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX)
@@ -249,7 +249,7 @@ def dump_html(dst_dir, board, thread, https=False):
     """
         Dumps thread in raw HTML format to `<thread-id>.html`
 
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
         :param board: string, board name
         :param thread: string, thread id
         :param https: bool, download using https. Default value: False
@@ -280,7 +280,7 @@ def find_in_all_posts(curr_thread, regex, fname, dst_dir):
     """
         Find a regex pattern in all comments and record them in a file
 
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
         :param regex: re.compile() object pattern to look for
         :param fname: filename to write to
         :param curr_thread: py4chan Thread object
@@ -316,7 +316,7 @@ def get_images(curr_thread, dst_dir):
         Download all images
 
         :param curr_thread: py4chan Thread object
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
     """
     # Create and set destination folders
     dst_images_dir = os.path.join(dst_dir, _IMAGE_DIR_NAME)
@@ -333,7 +333,7 @@ def get_thumbs(curr_thread, dst_dir):
         Download all thumbnails
 
         :param curr_thread: py4chan Thread object
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
     """
     # Create and set destination folders
     dst_thumbs_dir = os.path.join(dst_dir, _THUMB_DIR_NAME)
@@ -351,7 +351,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
     """
         Dump the thread using the functions defined above
 
-        :param dst_dir: string, destination folder name (not path)
+        :param dst_dir: string, destination folder
         :param board: string, board name
         :param thread: string, thread id
         :param curr_thread: py4chan Thread object
