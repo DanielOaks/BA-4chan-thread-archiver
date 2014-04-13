@@ -171,6 +171,23 @@ def download_file(fname, dst_folder, file_url, overwrite=False):
 
 
 
+def download_json(json_url, fname, dst_dir):
+    """
+        Download JSON to local file, pretty printed
+
+        :param json_url: string, URL to download from
+        :param fname: string, destination filename, no extension
+        :param dst_dir: string, destination folder name (not path)
+    """
+    json_filename = "%s.json" % fname
+    json_path = os.path.join(dst_dir, json_filename)
+    print(_TAG + "Downloading %s...", json_filename)
+
+    json_thread = requests.get(json_url)
+    json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
+
+
+
 def file_replace(fname, pat, s_after):
     """
         File in place regex function, using fileinput
@@ -187,6 +204,19 @@ def file_replace(fname, pat, s_after):
 
 
 """=== Dump Functions ==="""
+
+def dump_json(dst_dir, board, thread, https=False):
+    """
+        Dump 4chan JSON to local file, pretty printed
+
+        :param dst_dir: string, destination folder name (not path)
+        :param board: string, board name
+        :param thread: string, thread id
+        :param https: bool, download using https. Default value: False
+    """
+    http_header = ('http://' if not https else 'https://')
+    json_url = http_header + FOURCHAN_API_URL % (board, thread)
+    download_json(json_url, thread, dst_dir)
 
 def dump_css(dst_dir, https=True):
     """
@@ -243,23 +273,6 @@ def dump_html(dst_dir, board, thread, https=False):
     # convert HTML links to use local CSS files that we just downloaded
     # (FIXME) Might want to mod the HTML to use only ONE CSS file (perhaps by option)
     file_replace(html_path, HTTP_HEADER_UNIV + FOURCHAN_STATIC + FOURCHAN_CSS_REGEX, _CSS_DIR_NAME + r"/\1.css")
-
-
-
-def dump_json(json_url, fname, dst_dir):
-    """
-        Download JSON to local file, pretty printed
-
-        :param json_url: string, URL to download from
-        :param fname: string, destination filename, no extension
-        :param dst_dir: string, destination folder name (not path)
-        :param https: bool, download using https. Default value: False
-    """
-    json_filename = "%s.json" % fname
-    json_path = os.path.join(dst_dir, json_filename)
-
-    json_thread = requests.get(json_url)
-    json.dump(json_thread.json(), open(json_path, 'w'), sort_keys=True, indent=2, separators=(',', ': '))
 
 
 
@@ -364,9 +377,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
     dump_html(dst_dir, board, thread, https)
 
     # Dumps thread in JSON format to `<thread-id>.json` file, pretty printed
-    http_header = ('http://' if not https else 'https://')
-    json_url = http_header + FOURCHAN_API_URL % (board, thread)
-    dump_json(json_url, thread, dst_dir)
+    dump_json(dst_dir, board, thread, https)
 
 
 
