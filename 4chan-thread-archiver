@@ -113,6 +113,12 @@ _CSS_DIR_NAME = "css"
 """ external link filename """
 EXT_LINKS_FILENAME = "external_links.txt"
 
+"""
+    The Ultimate URL Regex
+    <http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python>
+"""
+URLREGEX = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
+
 """ Important Message Front Tag """
 _TAG = " :: "
 
@@ -259,19 +265,19 @@ def dump_json(dst_dir, board, thread, https=False):
 
 
 
-def list_external_links(curr_thread, dst_dir):
+def find_in_all_posts(curr_thread, regex, dst_dir):
     """
-        Get all external links quoted in comments
+        Find a regex pattern in all comments and record them in a file
 
-        :param curr_thread: py4chan Thread object
         :param dst_dir: string, destination folder name (not path)
+        :param regex: re.compile() object pattern to look for
+        # variables from initialized object
+        :param curr_thread: py4chan Thread object
     """
-    # `The Ultimate URL Regex` <http://stackoverflow.com/questions/520031/whats-the-cleanest-way-to-extract-urls-from-a-string-using-python>_
-    linkregex = re.compile(r"""((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.‌​][a-z]{2,4}/)(?:[^\s()<>]+|(([^\s()<>]+|(([^\s()<>]+)))*))+(?:(([^\s()<>]+|(‌​([^\s()<>]+)))*)|[^\s`!()[]{};:'".,<>?«»“”‘’]))""", re.DOTALL)
 
     # File to store list of all external links quoted in comments (overwrite upon each loop iteration)
-    linklist_dst = os.path.join(dst_dir, EXT_LINKS_FILENAME)
-    linklist_file = open(linklist_dst, "w")
+    listing_dst = os.path.join(dst_dir, EXT_LINKS_FILENAME)
+    listing_file = open(listing_dst, "w")
 
     for reply in curr_thread.replies:
       if (reply.Comment == None):
@@ -283,14 +289,14 @@ def list_external_links(curr_thread, dst_dir):
       else:
         # We need to get rid of all <wbr> tags before parsing
         cleaned_com = re.sub(r'\<wbr\>', '', reply.Comment)
-        linklist = re.findall(linkregex, cleaned_com)
-        for item in linklist:
-          print(_TAG + "Found URL, saving in %s:\n%s\n" % (linklist_dst, item[0]))
-          linklist_file.write(item[0])	# re.findall creates tuple
-          linklist_file.write('\n')	# subdivide with newlines
+        listing = re.findall(regex, cleaned_com)
+        for item in listing:
+          print(_TAG + "Found URL, saving in %s:\n%s\n" % (listing_dst, item[0]))
+          listing_file.write(item[0])	# re.findall creates tuple
+          listing_file.write('\n')	# subdivide with newlines
 
-    # Close linklist file after loop
-    linklist_file.close()
+    # Close listing file after loop
+    listing_file.close()
 
 
 
@@ -354,7 +360,7 @@ def dump(dst_dir, board, thread, curr_thread, nothumbs=False, thumbsonly=False, 
         get_thumbs(curr_thread, dst_dir)
 
     # Get all external links quoted in comments
-    list_external_links(curr_thread, dst_dir)
+    find_in_all_posts(curr_thread, URLREGEX, dst_dir)
 
     # Dumps thread in raw HTML format to `<thread-id>.html`
     dump_html(dst_dir, board, thread, https)
