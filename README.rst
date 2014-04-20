@@ -79,12 +79,12 @@ Linux/Mac
 ---------
 
 1. Install Python on your computer. On Linux, Python is almost always preinstalled.
-2. We also need to install the Pip package manager, to download all the dependencies.
+2. We also need to install the Pip package manager, to download all the dependencies, and Requests, a needed library. For an Ubuntu/Debian system, use the following commands:
 
 ::
 
-    easy_install pip
-    pip install BA-4chan-thread-archiver
+    sudo apt-get install python3-pip python3-requests
+    sudo pip install BA-4chan-thread-archiver
 
 3. Navigate your terminal to the folder you wish to save the threads into, and run the command below to download an entire thread. (you may also manually specify a path, using the **--path=** argument)
 
