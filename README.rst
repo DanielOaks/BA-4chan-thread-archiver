@@ -74,7 +74,13 @@ Windows
 ::
 
         python 4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path="C:\Users\Danny\4chan-threads"
-        
+  
+6. Sometimes, 4chan will make changes to it's API. We aim to update the script as soon as any change occurs, so if something's not working right, first use the command below to update. If you're still having problems, raise an issue on our `Github. <https://github.com/bibanon/BA-4chan-thread-archiver>`_
+
+::
+
+    pip install BA-4chan-thread-archiver --upgrade
+
 Linux/Mac
 ---------
 
@@ -91,6 +97,12 @@ Linux/Mac
 ::
 
     4chan-thread-archiver http://boards.4chan.org/b/res/423861837
+
+4. Sometimes, 4chan will make changes to it's API. We aim to update the script as soon as any change occurs, so if something's not working right, first use the command below to update. If you're still having problems, raise an issue on our `Github. <https://github.com/bibanon/BA-4chan-thread-archiver>`_
+
+::
+
+    sudo pip3 install BA-4chan-thread-archiver --upgrade
 
 Modifications to original
 ==========================
