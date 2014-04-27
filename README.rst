@@ -74,23 +74,35 @@ Windows
 ::
 
         python 4chan-thread-archiver http://boards.4chan.org/b/res/423861837 --path="C:\Users\Danny\4chan-threads"
-        
+  
+6. Sometimes, 4chan will make changes to it's API. We aim to update the script as soon as any change occurs, so if something's not working right, first use the command below to update. If you're still having problems, raise an issue on our `Github. <https://github.com/bibanon/BA-4chan-thread-archiver>`_
+
+::
+
+    pip install BA-4chan-thread-archiver --upgrade
+
 Linux/Mac
 ---------
 
 1. Install Python on your computer. On Linux, Python is almost always preinstalled.
-2. We also need to install the Pip package manager, to download all the dependencies.
+2. We also need to install the Pip package manager, to download all the dependencies, and Requests, a needed library. For an Ubuntu/Debian system, use the following commands:
 
 ::
 
-    easy_install pip
-    pip install BA-4chan-thread-archiver
+    sudo apt-get install python3-pip python3-requests
+    sudo pip3 install BA-4chan-thread-archiver
 
 3. Navigate your terminal to the folder you wish to save the threads into, and run the command below to download an entire thread. (you may also manually specify a path, using the **--path=** argument)
 
 ::
 
     4chan-thread-archiver http://boards.4chan.org/b/res/423861837
+
+4. Sometimes, 4chan will make changes to it's API. We aim to update the script as soon as any change occurs, so if something's not working right, first use the command below to update. If you're still having problems, raise an issue on our `Github. <https://github.com/bibanon/BA-4chan-thread-archiver>`_
+
+::
+
+    sudo pip3 install BA-4chan-thread-archiver --upgrade
 
 Modifications to original
 ==========================

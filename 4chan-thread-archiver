@@ -90,8 +90,8 @@ FOURCHAN_THUMBS_URL = FOURCHAN_THUMBS + FOURCHAN_THUMBS_FOOTER
     Matches links in dumped HTML.
 """
 HTTP_HEADER_UNIV = r"https?://"          # works for both http and https links
-FOURCHAN_IMAGES_REGEX = r"/\w+/src/"
-FOURCHAN_THUMBS_REGEX = r"/\w+/thumb/"
+FOURCHAN_IMAGES_REGEX = r"/\w+/"
+FOURCHAN_THUMBS_REGEX = r"/\w+/"
 FOURCHAN_CSS_REGEX = r"/css/(\w+)\.\d+.css"
 
 """
@@ -388,7 +388,7 @@ def check_url(url):
         Make sure that the given URL is a valid 4chan thread URL.
         Originates from The Chandler by Dhole
     """
-    url_parsed = re.findall("http(?:s)?://(?:boards.)?.*/*/res/[0-9]*(?:.php|.html)?", url)
+    url_parsed = re.findall("http(?:s)?://(?:boards.)?.*/*/(?:thread|res)?/[0-9]+(?:.php|.html)?", url)
     if len(url_parsed) < 1:
       return ""
     else:
