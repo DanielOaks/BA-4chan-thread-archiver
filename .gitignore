@@ -28,3 +28,6 @@ pip-log.txt
 
 4chandownloader/*.pyc
 .DS_Store
+
+#Test dumps
+4chan/
