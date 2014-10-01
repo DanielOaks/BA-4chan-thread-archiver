@@ -104,6 +104,20 @@ Linux/Mac
 
     sudo pip3 install BA-4chan-thread-archiver --upgrade
 
+Where to Post Archived threads.
+============
+
+After archiving your threads, you can just upload the entire `4chan` to any static HTML host (no PHP needed). We strongly recommend that you share them with the world on some kind of Static HTML host, such as the following:
+
+* Github Pages
+* Gitorious Pages
+* Google Pages
+* And more!
+
+Please make sure that your content follows the chosen host's Terms of Service policies (keep your pr0n to yourself, etc.).
+
+In the future we will make an extension that records links to currently downloaded threads in an index.html file...
+
 Modifications to original
 ==========================
 
