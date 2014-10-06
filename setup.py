@@ -19,7 +19,7 @@ with open('README.rst') as file:
 
 setup(
 		name             = 'BA-4chan-thread-archiver',
-		version          = '0.6.9',
+		version          = '0.7.1',
 		description      = 'Makes a complete archive of a 4chan thread\'s images, HTML, and JSON, using the 4chan API.',
 		long_description = long_description, 
 		license          = open('LICENSE').read(),
@@ -33,7 +33,5 @@ setup(
 		'Intended Audience :: Developers',
 		'Natural Language :: English',
 		'License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)',
-		'Programming Language :: Python',
-		'Programming Language :: Python :: 2.6',
-		'Programming Language :: Python :: 2.7')
+		'Programming Language :: Python')
 )
