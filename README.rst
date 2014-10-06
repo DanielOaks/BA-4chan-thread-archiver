@@ -24,19 +24,22 @@ Usage
 
 ::
 
-    Usage:
-      4chan-thread-archiver <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
-      4chan-thread-archiver -h | --help
-      4chan-thread-archiver -v | --version
 
+    Usage:
+        4chan-thread-archiver <url> [--path=<string>] [--runonce] [--silent] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
+        4chan-thread-archiver -h | --help
+        4chan-thread-archiver -v | --version
+    
     Options:
-      --nothumbs          Don't download thumbnails
-      --thumbsonly        Download thumbnails, no images
-      --enablessl         Download using HTTPS
-      --path=<string>     Path to folder where archives will be saved
-      --delay=<int>       Delay between thread checks [default: 20]
-      -h --help           Show help
-      -v --version        Show version
+        --path=<string>     Path to folder where archives will be saved
+        --runonce           Downloads the thread as it is presently, then exits
+        --silent            Suppresses mundane printouts, prints what's important
+        --delay=<int>       Delay between thread checks [default: 20]
+        --nothumbs          Don't download thumbnails
+        --thumbsonly        Download thumbnails, no images
+        --enablessl         Download using HTTPS
+        -h --help           Show help
+        -v --version        Show version
 
     By default, the script saves to the folder ``4chan`` in the current working directory.
 
