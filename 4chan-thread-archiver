@@ -486,27 +486,27 @@ def main(args):
             print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
             print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
             raise SystemExit(0)
-
-
+          
+          
           # Update thread and check if new replies have appeared
           new_replies = curr_thread.update()
           if (new_replies == 0):
             print(_TAG + "%s - [No new posts.]" % timestamp())
             continue
-
+          
           else:
-            print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
-
+          print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
+          
           # If all tests are OK, dump thread again
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-
-		  # If the 'runonce' flag is set, then end the loop and exit early
-		  if runonce: running = False
-
+          
+          # If the 'runonce' flag is set, then end the loop and exit early
+          if runonce: running = False
+          
         else:
           # dump thread for the first time
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-
+          
           # first iteration is complete
           first_iteration = False
 
