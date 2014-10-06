@@ -36,18 +36,20 @@ to download thread images and/or thumbnails, along with thread HTML, JSON,
 and a list of referenced external links.
 
 Usage:
-  4chan-thread-archiver <url> [--path=<string>] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
+  4chan-thread-archiver <url> [--path=<string>] [--runonce] [--silent] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
   4chan-thread-archiver -h | --help
   4chan-thread-archiver -v | --version
 
 Options:
-  --nothumbs          Don't download thumbnails
-  --thumbsonly        Download thumbnails, no images
-  --enablessl         Download using HTTPS
-  --path=<string>     Path to folder where archives will be saved
-  --delay=<int>       Delay between thread checks [default: 20]
-  -h --help           Show help
-  -v --version        Show version
+  --path=<string>		Path to folder where archives will be saved
+  --runonce				Downloads the thread as it is presently, then exits
+  --silent				Suppresses mundane printouts, prints what's important
+  --delay=<int>			Delay between thread checks [default: 20]
+  --nothumbs			Don't download thumbnails
+  --thumbsonly			Download thumbnails, no images
+  --enablessl			Download using HTTPS
+  -h --help				Show help
+  -v --version			Show version
 """
 
 
@@ -155,7 +157,8 @@ def download_file(fname, dst_folder, file_url, overwrite=False):
 
     # If the file doesn't exist, download it
     if ( not os.path.exists(file_dst) ) or overwrite:
-      print(_TAG + '%s downloading...' % fname)
+      if not silent:
+        print(_TAG + '%s downloading...' % fname)
       i = requests.get(file_url)
 
       if i.status_code == 404:
@@ -421,10 +424,12 @@ def main(args):
     thread = args.get('<url>').split('/')[5]
     board  = args.get('<url>').split('/')[3]
     path   = args.get('--path')
+    runonce = args.get('--runonce', False)
+    silent = args.get('--silent', False)
+    delay  = args.get('--delay')
     nothumbs = args.get('--nothumbs', False)
     thumbsonly = args.get('--thumbsonly', False)
     enablessl = args.get('--enablessl', False)
-    delay  = args.get('--delay')
 
 
     # Set a default path if none is given
@@ -454,10 +459,11 @@ def main(args):
         print(_TAG + "Unable to connect to the internet.")
         raise SystemExit(0)
 
-    # header
-    print(_TAG + 'Board : 4chan /%s/' % board)
-    print(_TAG + 'Thread: %s' % thread)
-    print(_TAG + 'Folder: %s' % dst_dir)
+	# header
+	if not silent:
+		print(_TAG + 'Board : 4chan /%s/' % board)
+		print(_TAG + 'Thread: %s' % thread)
+		print(_TAG + 'Folder: %s' % dst_dir)
 
 
     # Using try/except loop to handle Ctrl-C
@@ -465,7 +471,9 @@ def main(args):
       # Switch to check for first run
       first_iteration = True
 
-      while 1:
+      running = True
+      
+      while running:
         # don't run this code the first time
         if (first_iteration == False):
 
@@ -491,6 +499,9 @@ def main(args):
 
           # If all tests are OK, dump thread again
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
+
+		  # If the 'runonce' flag is set, then end the loop and exit early
+		  if runonce: running = False
 
         else:
           # dump thread for the first time
