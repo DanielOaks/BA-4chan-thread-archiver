@@ -458,12 +458,12 @@ def main(args):
     except:
         print(_TAG + "Unable to connect to the internet.")
         raise SystemExit(0)
-
-	# header
-	if not silent:
-		print(_TAG + 'Board : 4chan /%s/' % board)
-		print(_TAG + 'Thread: %s' % thread)
-		print(_TAG + 'Folder: %s' % dst_dir)
+        
+        # header
+        if not silent:
+            print(_TAG + 'Board : 4chan /%s/' % board)
+            print(_TAG + 'Thread: %s' % thread)
+            print(_TAG + 'Folder: %s' % dst_dir)
 
 
     # Using try/except loop to handle Ctrl-C
@@ -495,7 +495,7 @@ def main(args):
             continue
           
           else:
-          print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
+              print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
           
           # If all tests are OK, dump thread again
           dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
