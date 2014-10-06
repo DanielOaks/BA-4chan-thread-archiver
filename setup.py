@@ -25,7 +25,7 @@ setup(
 		license          = open('LICENSE').read(),
 		author           = 'Lawrence Wu',
 		author_email     = 'sagnessagiel@gmail.com',
-		url              = 'https://github.com/bibanon/4chandownloader',
+		url              = 'https://github.com/bibanon/BA-4chan-thread-archiver',
 		keywords         = '4chan downloader images json dump',
 		scripts          = ['4chan-thread-archiver', '4chan-thread-archiver-old'],
 		install_requires = ['requests', 'docopt==0.5.0', 'py-4chan'],
