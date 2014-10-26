@@ -41,15 +41,15 @@ Usage:
   4chan-thread-archiver -v | --version
 
 Options:
-  --path=<string>		Path to folder where archives will be saved
-  --runonce				Downloads the thread as it is presently, then exits
-  --silent				Suppresses mundane printouts, prints what's important
-  --delay=<int>			Delay between thread checks [default: 20]
-  --nothumbs			Don't download thumbnails
-  --thumbsonly			Download thumbnails, no images
-  --enablessl			Download using HTTPS
-  -h --help				Show help
-  -v --version			Show version
+  --path=<string>               Path to folder where archives will be saved
+  --runonce                     Downloads the thread as it is presently, then exits
+  --silent                      Suppresses mundane printouts, prints what's important
+  --delay=<int>                 Delay between thread checks [default: 20]
+  --nothumbs                    Don't download thumbnails
+  --thumbsonly                  Download thumbnails, no images
+  --enablessl                   Download using HTTPS
+  -h --help                     Show help
+  -v --version                  Show version
 """
 
 
