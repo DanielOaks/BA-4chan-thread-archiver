@@ -43,7 +43,6 @@ Usage:
 Options:
   --path=<string>               Path to folder where archives will be saved
   --runonce                     Downloads the thread as it is presently, then exits
-  --silent                      Suppresses mundane printouts, prints what's important
   --delay=<int>                 Delay between thread checks [default: 20]
   --nothumbs                    Don't download thumbnails
   --thumbsonly                  Download thumbnails, no images
@@ -51,8 +50,8 @@ Options:
   -h --help                     Show help
   -v --version                  Show version
 """
-
-
+# future options (need to implement later)
+#--silent                      Suppresses mundane printouts, prints what's important
 
 """=== 4chan URL Settings ==="""
 
@@ -157,8 +156,7 @@ def download_file(fname, dst_folder, file_url, overwrite=False):
 
     # If the file doesn't exist, download it
     if ( not os.path.exists(file_dst) ) or overwrite:
-      if not silent:
-        print(_TAG + '%s downloading...' % fname)
+      print(_TAG + '%s downloading...' % fname)
       i = requests.get(file_url)
 
       if i.status_code == 404:
@@ -425,7 +423,7 @@ def main(args):
     board  = args.get('<url>').split('/')[3]
     path   = args.get('--path')
     runonce = args.get('--runonce', False)
-    silent = args.get('--silent', False)
+#    silent = args.get('--silent', False)       # must implement silent later
     delay  = args.get('--delay')
     nothumbs = args.get('--nothumbs', False)
     thumbsonly = args.get('--thumbsonly', False)
@@ -459,11 +457,10 @@ def main(args):
         print(_TAG + "Unable to connect to the internet.")
         raise SystemExit(0)
         
-        # header
-        if not silent:
-            print(_TAG + 'Board : 4chan /%s/' % board)
-            print(_TAG + 'Thread: %s' % thread)
-            print(_TAG + 'Folder: %s' % dst_dir)
+    # header
+    print(_TAG + 'Board : 4chan /%s/' % board)
+    print(_TAG + 'Thread: %s' % thread)
+    print(_TAG + 'Folder: %s' % dst_dir)
 
 
     # Using try/except loop to handle Ctrl-C
