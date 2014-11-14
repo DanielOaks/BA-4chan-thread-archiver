@@ -36,7 +36,7 @@ to download thread images and/or thumbnails, along with thread HTML, JSON,
 and a list of referenced external links.
 
 Usage:
-  4chan-thread-archiver <url> [--path=<string>] [--runonce] [--silent] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
+  4chan-thread-archiver <url>... [--path=<string>] [--runonce] [--silent] [--delay=<int>] [--nothumbs] [--thumbsonly] [--enablessl]
   4chan-thread-archiver -h | --help
   4chan-thread-archiver -v | --version
 
@@ -413,14 +413,22 @@ def main(args):
     """
         Check 4chan API for new content, and recursively dump thread
     """
-    # Stop the script if the given URL is malformed
-    if (check_url(args.get('<url>')) == ""):
-      print(_TAG + "The URL is invalid, or it isn't a 4chan thread URL.")
-      raise SystemExit(0)
+    url_list = args.get('<url>', [])
+
+    # Skip misformed URLs
+    boards = {}
+    for url in url_list:
+        if (check_url(url) == ""):
+            print("This URL is invalid or it isn't a 4chan thread URL, skipping: {}".format(url))
+        else:
+            thread_id = url.split('/')[5]
+            board_name = url.split('/')[3]
+            if board_name not in boards:
+                boards[board_name] = []
+
+            boards[board_name].append(thread_id)
 
     # Copy data from docopt arguments
-    thread = args.get('<url>').split('/')[5]
-    board  = args.get('<url>').split('/')[3]
     path   = args.get('--path')
     runonce = args.get('--runonce', False)
 #    silent = args.get('--silent', False)       # must implement silent later
@@ -432,86 +440,105 @@ def main(args):
 
     # Set a default path if none is given
     if (path == None):
-      path = os.path.join(os.getcwd() + os.path.sep + _DEFAULT_FOLDER)
+        path = os.path.join(os.getcwd() + os.path.sep + _DEFAULT_FOLDER)
 
-    # Set destination directory
-    dst_dir = os.path.join(path, board, thread)
-
-
-    # Initialize py4chan Board object, enable https
-    curr_board = py4chan.Board(board, https=enablessl)
+    # store running board and thread objects
+    running_threads = {}
+    running_boards = {}
+    for board_name in boards:
+        running_boards[board_name] = py4chan.Board(board_name, https=enablessl)
 
 
     # Check if the thread exists, then create py4chan thread object. Stop if not found
     try:
-      if (curr_board.threadExists(int(thread))):
-        curr_thread = curr_board.getThread(int(thread))
-#      if (curr_board.thread_exists(int(thread))):
-#        curr_thread = curr_board.get_thread(int(thread))       # BA py-4chan 0.3
-      else:
-        print(_TAG + "Thread %s not found." % thread)
-        print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
-        raise SystemExit(0)
+        for board_name in dict(boards):
+            running_board = running_boards[board_name]
+            for thread_id in list(boards[board_name]):
+                if running_board.threadExists(int(thread_id)):
+                    running_threads[int(thread_id)] = {
+                        'thread': running_board.getThread(int(thread_id)),
+                        'id': int(thread_id),
+                        'board': board_name,
+                        'dst_dir': os.path.join(path, board_name, thread_id),
+                    }
+                else:
+                    print(_TAG + "Thread %s not found." % thread_id)
+                    print(_TAG + "Either the thread already 404'ed, your URL is incorrect, or you aren't connected to the internet")
+                    boards[board_name].remove(thread_id)
     # FIXME: Handles the error of no internet connection, but better to except requests.exceptions.ConnectionError:
     except:
         print(_TAG + "Unable to connect to the internet.")
         raise SystemExit(0)
-        
+
     # header
-    print(_TAG + 'Board : 4chan /%s/' % board)
-    print(_TAG + 'Thread: %s' % thread)
-    print(_TAG + 'Folder: %s' % dst_dir)
+    for board_name in boards:
+        print(_TAG + 'Board : 4chan /%s/' % board_name)
+        for thread_id in boards[board_name]:
+            print(_TAG + 'Thread: %s' % thread_id)
+            dst_dir = os.path.join(path, board_name, thread_id)
+            print(_TAG + 'Folder: %s' % dst_dir)
 
 
     # Using try/except loop to handle Ctrl-C
     try:
-      # Switch to check for first run
-      first_iteration = True
+        # Switch to check for first run
+        first_iteration = True
 
-      running = True
+        running = True
       
-      while running:
-        # don't run this code the first time
-        if (first_iteration == False):
+        while running:
+            # don't run this code the first time
+            if (first_iteration == False):
 
-          # Wait to execute code again
-          print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
-          time.sleep(int(delay))
+                # Wait to execute code again
+                print("\n" + _TAG + "Waiting %s seconds before retrying (Type Ctrl-C to stop)" % delay)
+                time.sleep(int(delay))
 
-          if curr_thread.is_404:
-            # Stop when thread gets 404'ed
-            print(_TAG + "%s - [Thread 404'ed or Connection Lost]" % timestamp())
-            print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
-            raise SystemExit(0)
+                for thread_id in dict(running_threads):
+                    thread = running_threads[thread_id]
+                    curr_thread = thread['thread']
+
+                    if curr_thread.is_404:
+                        # Stop when thread gets 404'ed
+                        print(_TAG + "%s - %s - [Thread 404'ed or Connection Lost]" % (timestamp(), thread['id']))
+                        del running_threads[thread['id']]
+
+                    # Update thread and check if new replies have appeared
+                    new_replies = curr_thread.update()
+                    if (new_replies == 0):
+                        print(_TAG + "%s - %s- [No new posts.]" % (timestamp(), thread['id']))
+                        continue
+
+                    else:
+                        print(_TAG + "%s - %s- [%s new post(s) found!]" % (timestamp(), thread['id'], new_replies))
+
+                    # If all tests are OK, dump thread again
+                    dump(thread['dst_dir'], thread['board'], thread['id'], curr_thread, nothumbs, thumbsonly, https=enablessl)
+
+                    if len(running_threads) < 1:
+                        print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
+                        raise SystemExit(0)
           
+                # If the 'runonce' flag is set, then end the loop and exit early
+                if runonce:
+                    running = False
           
-          # Update thread and check if new replies have appeared
-          new_replies = curr_thread.update()
-          if (new_replies == 0):
-            print(_TAG + "%s - [No new posts.]" % timestamp())
-            continue
+            else:
+                for thread_id in dict(running_threads):
+                    thread = running_threads[thread_id]
+                    curr_thread = thread['thread']
+
+                    # dump thread for the first time
+                    dump(thread['dst_dir'], thread['board'], thread['id'], curr_thread, nothumbs, thumbsonly, https=enablessl)
           
-          else:
-              print(_TAG + "%s - [%s new post(s) found!]" % (timestamp(), new_replies))
-          
-          # If all tests are OK, dump thread again
-          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-          
-          # If the 'runonce' flag is set, then end the loop and exit early
-          if runonce: running = False
-          
-        else:
-          # dump thread for the first time
-          dump(dst_dir, board, thread, curr_thread, nothumbs, thumbsonly, https=enablessl)
-          
-          # first iteration is complete
-          first_iteration = False
+                # first iteration is complete
+                first_iteration = False
 
     except KeyboardInterrupt:
-      """ Stop try/except loop when [Ctrl-C] is pressed"""
-      print("\n")
-      print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
-      raise SystemExit(0)
+        """ Stop try/except loop when [Ctrl-C] is pressed"""
+        print("\n")
+        print(" :: Dump complete. To resume dumping the same thread,\nrun this script again.")
+        raise SystemExit(0)
 
 
 
